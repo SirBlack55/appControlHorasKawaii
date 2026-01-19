@@ -66,7 +66,7 @@
     </script>
 
     <style>
-      /* Estilos base y animaciones */
+      /* Estilos base */
       body {
         font-family: "Comfortaa", cursive;
         -webkit-tap-highlight-color: transparent;
@@ -75,7 +75,7 @@
           color 0.5s ease;
       }
 
-      /* Corrección CRÍTICA para el Notch del iPhone */
+      /* Corrección Notch iPhone */
       header {
         padding-top: env(safe-area-inset-top);
         height: calc(70px + env(safe-area-inset-top));
@@ -83,18 +83,15 @@
 
       main {
         padding-top: calc(80px + env(safe-area-inset-top));
-        padding-bottom: calc(
-          100px + env(safe-area-inset-bottom)
-        ); /* Espacio para la navbar */
+        padding-bottom: calc(100px + env(safe-area-inset-bottom));
       }
 
-      /* Navbar inferior */
       .bottom-nav {
         padding-bottom: env(safe-area-inset-bottom);
         height: calc(70px + env(safe-area-inset-bottom));
       }
 
-      /* Ocultar scrollbar pero permitir scroll */
+      /* Utilidades */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -103,14 +100,12 @@
         scrollbar-width: none;
       }
 
-      /* Animación suave para inputs */
       input:focus {
         outline: none;
         transform: scale(1.02);
         transition: all 0.2s ease;
       }
 
-      /* Estilo iOS para inputs */
       input[type="date"],
       input[type="time"],
       input[type="number"] {
@@ -118,7 +113,7 @@
         -webkit-appearance: none;
       }
 
-      /* Fondos */
+      /* Fondos y Temas */
       .bg-pattern-light {
         background-color: #fff0f5;
         background-image: radial-gradient(#ffb7b2 2px, transparent 2px);
@@ -146,7 +141,7 @@
         animation: float 3s ease-in-out infinite;
       }
 
-      /* Estilos Calendario */
+      /* Calendario */
       .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -157,7 +152,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 9999px; /* Círculo perfecto */
+        border-radius: 9999px;
         font-size: 0.8rem;
         position: relative;
         cursor: pointer;
@@ -167,7 +162,6 @@
         background: transparent;
         cursor: default;
       }
-
       .has-work::after {
         content: "";
         position: absolute;
@@ -178,7 +172,7 @@
         background-color: currentColor;
       }
 
-      /* Animación Fade In para pestañas */
+      /* Pestañas */
       .tab-content {
         display: none;
         animation: fadeIn 0.3s ease-out;
@@ -195,6 +189,46 @@
           opacity: 1;
           transform: translateY(0);
         }
+      }
+
+      /* Checkbox Personalizado */
+      .custom-checkbox {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .dark .custom-checkbox {
+        border-color: #555;
+      }
+
+      .row-selected .custom-checkbox {
+        background-color: #ec4899;
+        border-color: #ec4899;
+        color: white;
+      }
+      .dark .row-selected .custom-checkbox {
+        background-color: #9333ea;
+        border-color: #9333ea;
+      }
+
+      /* Widget Flotante */
+      .selection-widget {
+        position: fixed;
+        bottom: calc(80px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%) translateY(200%);
+        width: 90%;
+        max-width: 400px;
+        z-index: 40;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .selection-widget.visible {
+        transform: translateX(-50%) translateY(0);
       }
     </style>
   </head>
@@ -235,7 +269,7 @@
     <main class="px-5 max-w-md mx-auto space-y-6">
       <!-- PESTAÑA 1: INICIO (Fichar) -->
       <div id="tab-home" class="tab-content active">
-        <!-- Tarjeta Resumen -->
+        <!-- Resumen -->
         <div
           class="bg-white dark:bg-zinc-800 rounded-3xl p-6 shadow-lg border-2 border-pink-100 dark:border-purple-900 relative overflow-hidden transition-colors duration-500 mb-6"
         >
@@ -258,9 +292,23 @@
             >
             <span class="text-xl font-bold text-gray-500">€</span>
           </div>
+          <div class="mt-2 flex gap-4 text-xs text-gray-400">
+            <span
+              >✅ Cobrado:
+              <span id="paid-total" class="font-bold text-green-500"
+                >0.00€</span
+              ></span
+            >
+            <span
+              >⏳ Pendiente:
+              <span id="pending-total" class="font-bold text-orange-400"
+                >0.00€</span
+              ></span
+            >
+          </div>
         </div>
 
-        <!-- Formulario de Entrada -->
+        <!-- Formulario -->
         <div
           class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur rounded-3xl p-6 shadow-xl border border-pink-200 dark:border-purple-800 transition-colors duration-500"
         >
@@ -325,13 +373,12 @@
         </div>
       </div>
 
-      <!-- PESTAÑA 2: AGENDA (Calendario + Lista) -->
+      <!-- PESTAÑA 2: AGENDA -->
       <div id="tab-calendar" class="tab-content">
-        <!-- Widget de Calendario -->
+        <!-- Calendario -->
         <div
           class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur rounded-3xl p-5 shadow-xl border border-pink-200 dark:border-purple-800 transition-colors duration-500 mb-6"
         >
-          <!-- Header Calendario -->
           <div class="flex justify-between items-center mb-4">
             <button
               onclick="changeMonth(-1)"
@@ -353,7 +400,6 @@
             </button>
           </div>
 
-          <!-- Días Semana -->
           <div
             class="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold text-gray-400"
           >
@@ -366,12 +412,8 @@
             <div>D</div>
           </div>
 
-          <!-- Grid Días -->
-          <div id="calendar-days" class="calendar-grid mb-4">
-            <!-- JS rellena esto -->
-          </div>
+          <div id="calendar-days" class="calendar-grid mb-4"></div>
 
-          <!-- Resumen Mensual -->
           <div
             class="bg-pink-50 dark:bg-zinc-800/50 rounded-xl p-3 flex justify-between items-center border border-pink-100 dark:border-purple-900/30"
           >
@@ -386,23 +428,16 @@
           </div>
         </div>
 
-        <!-- Lista de Historial -->
+        <!-- Lista -->
         <div>
           <div class="flex justify-between items-end mb-3 px-2">
             <h3 class="font-chunky text-lg text-gray-600 dark:text-gray-300">
               Historial
             </h3>
-            <button
-              onclick="copyToClipboard()"
-              class="text-xs bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-full shadow text-blue-400 dark:text-blue-300 font-bold border border-pink-100 dark:border-purple-900 active:scale-95 flex items-center gap-1"
-            >
-              <i class="fa-regular fa-copy"></i> Copiar Notas
-            </button>
+            <p class="text-[10px] text-gray-400">Selecciona para calcular</p>
           </div>
 
-          <div id="entries-list" class="space-y-4">
-            <!-- Se rellena con JS -->
-          </div>
+          <div id="entries-list" class="space-y-4 pb-20"></div>
         </div>
       </div>
 
@@ -414,7 +449,7 @@
           Ajustes
         </h3>
 
-        <!-- Configuración General -->
+        <!-- Configuración Tarifa -->
         <div
           class="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-purple-900/30 mb-6"
         >
@@ -434,21 +469,22 @@
                 id="settings-rate"
                 class="flex-1 bg-gray-50 dark:bg-zinc-800 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
                 placeholder="10.00"
+                step="0.50"
               />
               <button
                 onclick="saveDefaultRate()"
-                class="bg-pink-100 dark:bg-purple-900 text-pink-500 dark:text-purple-300 px-4 rounded-xl font-bold text-sm"
+                class="bg-pink-100 dark:bg-purple-900 text-pink-500 dark:text-purple-300 px-4 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition"
               >
                 Guardar
               </button>
             </div>
             <p class="text-xs text-gray-400 mt-2">
-              Este valor aparecerá automáticamente cuando crees un nuevo turno.
+              Este valor se aplicará automáticamente al crear turnos.
             </p>
           </div>
         </div>
 
-        <!-- Gestión de Datos -->
+        <!-- Backup -->
         <div
           class="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-purple-900/30 mb-6"
         >
@@ -457,7 +493,6 @@
           >
             Copia de Seguridad
           </h4>
-
           <div class="grid grid-cols-2 gap-3 mb-4">
             <button
               onclick="backupData()"
@@ -474,7 +509,6 @@
               <span class="text-xs font-bold">Restaurar</span>
             </button>
           </div>
-
           <input
             type="file"
             id="file-input"
@@ -482,13 +516,9 @@
             class="hidden"
             onchange="restoreData(this)"
           />
-          <p class="text-xs text-gray-400 text-center">
-            Guarda una copia de tus datos por si borras el historial o cambias
-            de móvil.
-          </p>
         </div>
 
-        <!-- Zona de Peligro -->
+        <!-- Peligro -->
         <div
           class="bg-red-50 dark:bg-red-900/10 rounded-3xl p-5 border border-red-100 dark:border-red-900/30"
         >
@@ -506,12 +536,62 @@
         </div>
 
         <div class="text-center mt-8 opacity-40">
-          <p class="font-kawaii text-xs">Workie App v2.1</p>
+          <p class="font-kawaii text-xs">Workie App v3.1</p>
         </div>
       </div>
     </main>
 
-    <!-- NAVIGATION BAR -->
+    <!-- WIDGET FLOTANTE -->
+    <div
+      id="selection-widget"
+      class="selection-widget bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border-2 border-pink-200 dark:border-purple-600 p-4 flex flex-col gap-3"
+    >
+      <div
+        class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            class="bg-pink-100 dark:bg-purple-900 text-pink-600 dark:text-purple-300 font-bold px-2 py-0.5 rounded-md text-xs"
+            id="selection-count"
+            >0</span
+          >
+          <span class="text-xs text-gray-500 dark:text-gray-400">selec.</span>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-gray-400 uppercase font-bold">
+            Total Selección
+          </div>
+          <div
+            class="font-chunky text-lg text-kitty-text dark:text-kuromi-accent"
+            id="selection-total"
+          >
+            0.00€
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button
+          onclick="markSelected(true)"
+          class="flex-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 py-2 rounded-xl text-xs font-bold active:scale-95 transition"
+        >
+          <i class="fa-solid fa-check mr-1"></i> Cobrado
+        </button>
+        <button
+          onclick="markSelected(false)"
+          class="flex-1 bg-orange-100 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 py-2 rounded-xl text-xs font-bold active:scale-95 transition"
+        >
+          <i class="fa-regular fa-clock mr-1"></i> Pendiente
+        </button>
+        <button
+          onclick="clearSelection()"
+          class="w-10 flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-gray-500 rounded-xl active:scale-95"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- NAVBAR -->
     <nav
       class="bottom-nav fixed bottom-0 left-0 w-full bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 z-50 flex justify-around items-start pt-3 transition-colors duration-500"
     >
@@ -541,7 +621,7 @@
       </button>
     </nav>
 
-    <!-- COMPONENTE MODAL GLOBAL -->
+    <!-- MODALES -->
     <div
       id="modal-overlay"
       class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300 px-4"
@@ -550,77 +630,116 @@
         id="modal-content"
         class="bg-white dark:bg-zinc-800 w-full max-w-xs rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-all duration-300 border-2 border-pink-100 dark:border-purple-900 relative"
       >
-        <!-- Decoración esquina (opcional) -->
-        <div class="absolute -top-3 -right-3 text-2xl animate-bounce">
-          <span class="dark:hidden">✨</span>
-          <span class="hidden dark:block">🦇</span>
-        </div>
-
-        <!-- Icono -->
         <div
           id="modal-icon"
           class="text-5xl text-center mb-4 filter drop-shadow-md"
         ></div>
-
-        <!-- Título -->
         <h3
           id="modal-title"
           class="font-chunky text-xl text-center text-gray-800 dark:text-white mb-2 leading-tight"
         ></h3>
-
-        <!-- Mensaje -->
         <div
           id="modal-message"
           class="text-center text-sm text-gray-500 dark:text-gray-300 mb-6 font-kawaii leading-relaxed"
         ></div>
+        <div id="modal-buttons" class="flex gap-3 justify-center"></div>
+      </div>
+    </div>
 
-        <!-- Botones -->
-        <div id="modal-buttons" class="flex gap-3 justify-center">
-          <!-- Se inyectan dinámicamente -->
+    <div
+      id="edit-modal-overlay"
+      class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300 px-4"
+    >
+      <div
+        id="edit-modal-content"
+        class="bg-white dark:bg-zinc-800 w-full max-w-sm rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-all duration-300 border-2 border-blue-100 dark:border-blue-900"
+      >
+        <h3
+          class="font-chunky text-xl text-center text-gray-800 dark:text-white mb-4"
+        >
+          Editar Turno ✏️
+        </h3>
+        <input type="hidden" id="edit-id" />
+        <div class="space-y-3 mb-6">
+          <div>
+            <label class="text-xs font-bold text-gray-500 ml-2">Fecha</label>
+            <input
+              type="date"
+              id="edit-date"
+              class="w-full bg-gray-50 dark:bg-zinc-700 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
+            />
+          </div>
+          <div class="flex gap-2">
+            <div class="flex-1">
+              <label class="text-xs font-bold text-gray-500 ml-2"
+                >Entrada</label
+              >
+              <input
+                type="time"
+                id="edit-start"
+                class="w-full bg-gray-50 dark:bg-zinc-700 rounded-xl px-2 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
+              />
+            </div>
+            <div class="flex-1">
+              <label class="text-xs font-bold text-gray-500 ml-2">Salida</label>
+              <input
+                type="time"
+                id="edit-end"
+                class="w-full bg-gray-50 dark:bg-zinc-700 rounded-xl px-2 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-gray-500 ml-2"
+              >Tarifa (€/h)</label
+            >
+            <input
+              type="number"
+              id="edit-rate"
+              class="w-full bg-gray-50 dark:bg-zinc-700 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
+              step="0.50"
+            />
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            onclick="closeEditModal()"
+            class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-300 font-bold text-sm active:scale-95 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onclick="saveEdit()"
+            class="flex-1 py-3 rounded-xl bg-blue-500 text-white font-bold text-sm shadow-lg active:scale-95 transition"
+          >
+            Guardar
+          </button>
         </div>
       </div>
     </div>
 
     <!-- SCRIPTS -->
     <script>
-      // --- ELEMENTOS Y ESTADO ---
-      const toggleBtn = document.getElementById("toggle-circle");
-      const listContainer = document.getElementById("entries-list");
-      const totalEarningsEl = document.getElementById("total-earnings");
-
-      // Widget Calendario
-      const calendarMonthYear = document.getElementById("calendar-month-year");
-      const calendarGrid = document.getElementById("calendar-days");
-      const monthEarningsEl = document.getElementById("month-earnings");
-
-      // Inputs
-      const rateInput = document.getElementById("hourly-rate");
-      const settingsRateInput = document.getElementById("settings-rate"); // Nuevo input en ajustes
-      const dateInput = document.getElementById("work-date");
-      const startInput = document.getElementById("start-time");
-      const endInput = document.getElementById("end-time");
-
+      // --- ESTADO ---
       let entries = JSON.parse(localStorage.getItem("workEntries")) || [];
       let savedRate = localStorage.getItem("hourlyRate") || "";
       let isDark = localStorage.getItem("theme") === "dark";
-
-      // Fecha actual del calendario
       let currentCalendarDate = new Date();
+      let selectedEntryIds = new Set();
 
+      // --- INICIO ---
       window.onload = () => {
-        dateInput.valueAsDate = new Date();
-
-        // Cargar tarifa guardada en ambos inputs
+        document.getElementById("work-date").valueAsDate = new Date();
+        // Cargar tarifa guardada en ambos inputs al iniciar
         if (savedRate) {
-          rateInput.value = savedRate;
-          settingsRateInput.value = savedRate;
+          document.getElementById("hourly-rate").value = savedRate;
+          document.getElementById("settings-rate").value = savedRate;
         }
-
         applyTheme();
         updateApp();
       };
 
-      // --- SISTEMA DE PESTAÑAS ---
+      // --- PESTAÑAS ---
       function switchTab(tabName) {
         document
           .querySelectorAll(".tab-content")
@@ -632,147 +751,375 @@
           document.getElementById(id).className =
             "flex flex-col items-center gap-1 w-16 text-gray-400 transition-colors";
         });
-
         document.getElementById(`nav-${tabName}`).className =
           "flex flex-col items-center gap-1 w-16 text-pink-500 dark:text-purple-400 transition-colors scale-110";
 
         if (tabName === "calendar") renderCalendar();
       }
 
-      // --- CORE FUNCTIONS ---
+      // --- CORE & DATA ---
       function updateApp() {
+        entries.forEach((e) => {
+          if (typeof e.paid === "undefined") e.paid = false;
+        });
         entries.sort((a, b) => {
           const dateA = new Date(a.date + "T" + a.start);
           const dateB = new Date(b.date + "T" + b.start);
           return dateB - dateA;
         });
-
-        saveData();
+        localStorage.setItem("workEntries", JSON.stringify(entries));
         renderEntries();
         renderCalendar();
+        updateTotals();
+        updateSelectionWidget();
       }
 
+      function updateTotals() {
+        let total = 0,
+          paid = 0,
+          pending = 0;
+        entries.forEach((e) => {
+          const val = parseFloat(e.earned);
+          total += val;
+          if (e.paid) paid += val;
+          else pending += val;
+        });
+        document.getElementById("total-earnings").innerText = total.toFixed(2);
+        document.getElementById("paid-total").innerText = paid.toFixed(2) + "€";
+        document.getElementById("pending-total").innerText =
+          pending.toFixed(2) + "€";
+      }
+
+      // --- AJUSTES DE TARIFA (ARREGLADO) ---
+      function saveDefaultRate() {
+        const val = document.getElementById("settings-rate").value;
+        if (val) {
+          localStorage.setItem("hourlyRate", val);
+          savedRate = val;
+          // Actualizar inmediatamente el input principal
+          document.getElementById("hourly-rate").value = val;
+
+          showModal({
+            title: "Guardado",
+            message: "Tarifa actualizada y aplicada al formulario.",
+            icon: "💾",
+          });
+        }
+      }
+
+      // --- AÑADIR TURNO ---
+      function addEntry() {
+        const rate = parseFloat(document.getElementById("hourly-rate").value);
+        const date = document.getElementById("work-date").value;
+        const start = document.getElementById("start-time").value;
+        const end = document.getElementById("end-time").value;
+
+        if (!rate || !date || !start || !end) {
+          showModal({ title: "¡Ups!", message: "Faltan datos.", icon: "🤔" });
+          return;
+        }
+
+        // Si no había tarifa guardada, la guardamos ahora
+        if (!localStorage.getItem("hourlyRate")) {
+          localStorage.setItem("hourlyRate", rate);
+          savedRate = rate;
+        }
+
+        const calc = calculateEarnings(date, start, end, rate);
+
+        entries.push({
+          id: Date.now(),
+          date: date,
+          start: start,
+          end: end,
+          rate: rate,
+          hours: calc.hours,
+          earned: calc.earned,
+          paid: false,
+        });
+
+        document.getElementById("start-time").value = "";
+        document.getElementById("end-time").value = "";
+
+        updateApp();
+        showModal({
+          title: "¡Apuntado!",
+          message: `Ganado: <b>${calc.earned}€</b>`,
+          icon: isDark ? "🦇" : "🎀",
+        });
+      }
+
+      function calculateEarnings(date, start, end, rate) {
+        const startTime = new Date(`2000-01-01T${start}`);
+        let endTime = new Date(`2000-01-01T${end}`);
+        if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
+        const diffHrs = (endTime - startTime) / (1000 * 60 * 60);
+        return {
+          hours: diffHrs.toFixed(2),
+          earned: (diffHrs * rate).toFixed(2),
+        };
+      }
+
+      // --- LISTA Y SELECCIÓN ---
+      function toggleSelection(id) {
+        if (selectedEntryIds.has(id)) selectedEntryIds.delete(id);
+        else selectedEntryIds.add(id);
+        renderEntries();
+        updateSelectionWidget();
+      }
+
+      function clearSelection() {
+        selectedEntryIds.clear();
+        renderEntries();
+        updateSelectionWidget();
+      }
+
+      function updateSelectionWidget() {
+        const widget = document.getElementById("selection-widget");
+        const countEl = document.getElementById("selection-count");
+        const totalEl = document.getElementById("selection-total");
+
+        if (selectedEntryIds.size > 0) {
+          widget.classList.add("visible");
+          countEl.innerText = selectedEntryIds.size;
+          let sum = 0;
+          entries.forEach((e) => {
+            if (selectedEntryIds.has(e.id)) sum += parseFloat(e.earned);
+          });
+          totalEl.innerText = sum.toFixed(2) + "€";
+        } else {
+          widget.classList.remove("visible");
+        }
+      }
+
+      function markSelected(isPaid) {
+        entries.forEach((e) => {
+          if (selectedEntryIds.has(e.id)) e.paid = isPaid;
+        });
+        updateApp();
+        clearSelection();
+        showModal({
+          title: isPaid ? "¡Cobrado!" : "Pendiente",
+          message: "Estado actualizado.",
+          icon: isPaid ? "🤑" : "📝",
+        });
+      }
+
+      function renderEntries() {
+        const container = document.getElementById("entries-list");
+        container.innerHTML = "";
+        if (entries.length === 0) {
+          container.innerHTML = `<div class="text-center py-10 opacity-50"><p>Lista vacía...</p></div>`;
+          return;
+        }
+        const grouped = {};
+        entries.forEach((entry) => {
+          if (!grouped[entry.date]) grouped[entry.date] = [];
+          grouped[entry.date].push(entry);
+        });
+        Object.keys(grouped).forEach((dateKey) => {
+          const dayEntries = grouped[dateKey];
+          const dateObj = new Date(dateKey);
+          const dayName = dateObj.toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          });
+          const dayContainer = document.createElement("div");
+          dayContainer.className =
+            "bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-pink-100 dark:border-purple-900 overflow-hidden animate-fade-in";
+          let shiftsHTML = "";
+          dayEntries.forEach((shift) => {
+            const isSelected = selectedEntryIds.has(shift.id);
+            const paidBadge = shift.paid
+              ? `<span class="text-[10px] bg-green-100 text-green-600 px-2 rounded-full font-bold ml-2">COBRADO</span>`
+              : "";
+            shiftsHTML += `
+                        <div class="flex items-center py-3 px-4 border-t border-gray-100 dark:border-gray-700 first:border-t-0 hover:bg-pink-50 dark:hover:bg-zinc-700/50 transition-colors ${isSelected ? "row-selected bg-pink-50 dark:bg-zinc-700" : ""}">
+                            <div class="mr-3 cursor-pointer p-2 -ml-2" onclick="toggleSelection(${shift.id})">
+                                <div class="custom-checkbox">${isSelected ? '<i class="fa-solid fa-check text-xs"></i>' : ""}</div>
+                            </div>
+                            <div class="flex-1 flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-pink-100 dark:bg-purple-900/50 text-pink-500 dark:text-purple-300 rounded-lg p-2 text-xs font-bold min-w-[60px] text-center">
+                                        ${shift.start}<br>⬇<br>${shift.end}
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-gray-700 dark:text-gray-200 flex items-center">${shift.hours} h ${paidBadge}</div>
+                                        <div class="text-xs text-gray-400">@ ${shift.rate}€/h</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-chunky text-lg ${shift.paid ? "text-green-500" : "text-kitty-text dark:text-kuromi-accent"}">+${shift.earned}€</span>
+                                    <button onclick="openEditModal(${shift.id})" class="text-gray-300 hover:text-blue-400 p-2"><i class="fa-solid fa-pencil text-sm"></i></button>
+                                    <button onclick="deleteEntry(${shift.id})" class="text-gray-300 hover:text-red-400 p-2 -mr-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+          });
+          dayContainer.innerHTML = `<div class="bg-pink-50 dark:bg-zinc-900 px-4 py-2 flex justify-between items-center"><span class="font-bold text-sm text-gray-600 dark:text-gray-300 capitalize">${dayName}</span></div><div>${shiftsHTML}</div>`;
+          container.appendChild(dayContainer);
+        });
+      }
+
+      // --- EDICIÓN ---
+      function openEditModal(id) {
+        const entry = entries.find((e) => e.id === id);
+        if (!entry) return;
+        document.getElementById("edit-id").value = id;
+        document.getElementById("edit-date").value = entry.date;
+        document.getElementById("edit-start").value = entry.start;
+        document.getElementById("edit-end").value = entry.end;
+        document.getElementById("edit-rate").value = entry.rate;
+        const overlay = document.getElementById("edit-modal-overlay");
+        const content = document.getElementById("edit-modal-content");
+        overlay.classList.remove("hidden");
+        setTimeout(() => {
+          overlay.classList.remove("opacity-0");
+          content.classList.add("scale-100");
+        }, 10);
+      }
+      function closeEditModal() {
+        const overlay = document.getElementById("edit-modal-overlay");
+        const content = document.getElementById("edit-modal-content");
+        overlay.classList.add("opacity-0");
+        content.classList.remove("scale-100");
+        setTimeout(() => overlay.classList.add("hidden"), 300);
+      }
+      function saveEdit() {
+        const id = parseInt(document.getElementById("edit-id").value);
+        const date = document.getElementById("edit-date").value;
+        const start = document.getElementById("edit-start").value;
+        const end = document.getElementById("edit-end").value;
+        const rate = parseFloat(document.getElementById("edit-rate").value);
+        if (!rate || !date || !start || !end) {
+          alert("Faltan datos");
+          return;
+        }
+        const index = entries.findIndex((e) => e.id === id);
+        if (index !== -1) {
+          const calc = calculateEarnings(date, start, end, rate);
+          entries[index] = {
+            ...entries[index],
+            date,
+            start,
+            end,
+            rate,
+            hours: calc.hours,
+            earned: calc.earned,
+          };
+          updateApp();
+          closeEditModal();
+          showModal({
+            title: "Editado",
+            message: "Turno actualizado.",
+            icon: "📝",
+          });
+        }
+      }
+      function deleteEntry(id) {
+        showModal({
+          title: "¿Borrar?",
+          message: "No podrás recuperarlo.",
+          icon: "🗑️",
+          type: "confirm",
+          onConfirm: () => {
+            entries = entries.filter((e) => e.id !== id);
+            if (selectedEntryIds.has(id)) selectedEntryIds.delete(id);
+            updateApp();
+          },
+        });
+      }
+
+      // --- CALENDARIO & HELPERS ---
+      function changeMonth(delta) {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+        renderCalendar();
+      }
+      function renderCalendar() {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        document.getElementById("calendar-month-year").textContent =
+          currentCalendarDate.toLocaleDateString("es-ES", {
+            month: "long",
+            year: "numeric",
+          });
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let startDay = firstDay.getDay() - 1;
+        if (startDay === -1) startDay = 6;
+        const grid = document.getElementById("calendar-days");
+        grid.innerHTML = "";
+        for (let i = 0; i < startDay; i++)
+          grid.appendChild(document.createElement("div"));
+        let monthTotal = 0;
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dayWork = entries.filter((e) => e.date === dateStr);
+          dayWork.forEach((w) => (monthTotal += parseFloat(w.earned)));
+          const el = document.createElement("div");
+          let classes =
+            "calendar-day font-bold text-gray-600 dark:text-gray-400";
+          if (
+            day === today.getDate() &&
+            month === today.getMonth() &&
+            year === today.getFullYear()
+          )
+            classes +=
+              " border-2 border-pink-400 dark:border-purple-400 text-pink-500 dark:text-purple-300";
+          if (dayWork.length > 0) {
+            const allPaid = dayWork.every((w) => w.paid);
+            classes += allPaid
+              ? " bg-green-400 text-white shadow-md has-work"
+              : " bg-pink-400 dark:bg-purple-600 text-white shadow-md has-work";
+            el.onclick = () => {
+              const t = dayWork
+                .reduce((a, b) => a + parseFloat(b.earned), 0)
+                .toFixed(2);
+              showModal({
+                title: `Día ${day}`,
+                message: `Total: <b>${t}€</b>`,
+                icon: "📅",
+              });
+            };
+          }
+          el.className = classes;
+          el.innerText = day;
+          grid.appendChild(el);
+        }
+        document.getElementById("month-earnings").innerText =
+          `${monthTotal.toFixed(2)}€`;
+      }
       function toggleTheme() {
         isDark = !isDark;
         localStorage.setItem("theme", isDark ? "dark" : "light");
         applyTheme();
       }
-
       function applyTheme() {
         const html = document.documentElement;
         const body = document.body;
+        const tBtn = document.getElementById("toggle-circle");
         if (isDark) {
           html.classList.add("dark");
-          body.classList.remove("bg-pattern-light");
-          body.classList.add("bg-pattern-dark");
-          toggleBtn.style.transform = "translateX(24px)";
-          toggleBtn.innerText = "💀";
-          toggleBtn.classList.remove("bg-white", "text-pink-500");
-          toggleBtn.classList.add("bg-zinc-800", "text-purple-500");
+          body.classList.replace("bg-pattern-light", "bg-pattern-dark");
+          tBtn.style.transform = "translateX(24px)";
+          tBtn.innerText = "💀";
+          tBtn.parentElement.classList.replace("bg-pink-200", "bg-purple-900");
           document
             .querySelector('meta[name="theme-color"]')
             .setAttribute("content", "#18181b");
         } else {
           html.classList.remove("dark");
-          body.classList.remove("bg-pattern-dark");
-          body.classList.add("bg-pattern-light");
-          toggleBtn.style.transform = "translateX(0px)";
-          toggleBtn.innerText = "🎀";
-          toggleBtn.classList.remove("bg-zinc-800", "text-purple-500");
-          toggleBtn.classList.add("bg-white", "text-pink-500");
+          body.classList.replace("bg-pattern-dark", "bg-pattern-light");
+          tBtn.style.transform = "translateX(0px)";
+          tBtn.innerText = "🎀";
+          tBtn.parentElement.classList.replace("bg-purple-900", "bg-pink-200");
           document
             .querySelector('meta[name="theme-color"]')
             .setAttribute("content", "#fce7f3");
         }
       }
-
-      // --- CALENDARIO ---
-      function changeMonth(delta) {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
-        renderCalendar();
-      }
-
-      function renderCalendar() {
-        const year = currentCalendarDate.getFullYear();
-        const month = currentCalendarDate.getMonth();
-        calendarMonthYear.textContent = currentCalendarDate.toLocaleDateString(
-          "es-ES",
-          { month: "long", year: "numeric" },
-        );
-
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-
-        let startDay = firstDay.getDay() - 1;
-        if (startDay === -1) startDay = 6;
-
-        calendarGrid.innerHTML = "";
-        let monthTotal = 0;
-
-        for (let i = 0; i < startDay; i++) {
-          const empty = document.createElement("div");
-          empty.className = "calendar-day empty";
-          calendarGrid.appendChild(empty);
-        }
-
-        const today = new Date();
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const dayWork = entries.filter((e) => e.date === dateStr);
-          const hasWork = dayWork.length > 0;
-
-          if (hasWork) {
-            dayWork.forEach((w) => (monthTotal += parseFloat(w.earned)));
-          }
-
-          const dayEl = document.createElement("div");
-          let classes =
-            "calendar-day font-bold text-gray-600 dark:text-gray-400";
-
-          if (
-            day === today.getDate() &&
-            month === today.getMonth() &&
-            year === today.getFullYear()
-          ) {
-            classes +=
-              " border-2 border-pink-400 dark:border-purple-400 text-pink-500 dark:text-purple-300";
-          }
-
-          if (hasWork) {
-            classes +=
-              " bg-pink-400 dark:bg-purple-600 text-white shadow-md has-work";
-            // NUEVO MODAL PARA DETALLES DEL DÍA
-            dayEl.onclick = () => {
-              const dayTotal = dayWork
-                .reduce((a, b) => a + parseFloat(b.earned), 0)
-                .toFixed(2);
-              let detailMsg = `Ganado total: <b>${dayTotal}€</b><br><br>`;
-              dayWork.forEach((w) => {
-                detailMsg += `⏰ ${w.start} - ${w.end} (${w.hours}h)<br>`;
-              });
-
-              showModal({
-                title: `Resumen del ${day}`,
-                message: detailMsg,
-                icon: isDark ? "💀" : "📅",
-                type: "info",
-              });
-            };
-          } else {
-            classes += " hover:bg-pink-100 dark:hover:bg-zinc-700";
-          }
-
-          dayEl.className = classes;
-          dayEl.innerText = day;
-          calendarGrid.appendChild(dayEl);
-        }
-        monthEarningsEl.innerText = `${monthTotal.toFixed(2)}€`;
-      }
-
-      // --- SISTEMA DE MODALES PERSONALIZADOS ---
-
       function showModal({
         title,
         message,
@@ -782,375 +1129,95 @@
       }) {
         const overlay = document.getElementById("modal-overlay");
         const content = document.getElementById("modal-content");
-
-        // Set content
         document.getElementById("modal-icon").innerHTML = icon;
         document.getElementById("modal-title").innerText = title;
         document.getElementById("modal-message").innerHTML = message;
-
         const btnContainer = document.getElementById("modal-buttons");
         btnContainer.innerHTML = "";
-
         if (type === "confirm") {
-          // Cancel
           const btnCancel = document.createElement("button");
           btnCancel.className =
-            "flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-300 font-bold text-sm active:scale-95 transition hover:bg-gray-200";
+            "flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 text-gray-500 font-bold text-sm";
           btnCancel.innerText = "Cancelar";
           btnCancel.onclick = closeModal;
-          btnContainer.appendChild(btnCancel);
-
-          // Confirm
           const btnConfirm = document.createElement("button");
           btnConfirm.className =
-            "flex-1 py-3 rounded-xl bg-pink-500 dark:bg-purple-600 text-white font-bold text-sm shadow-lg shadow-pink-200 dark:shadow-purple-900/50 active:scale-95 transition hover:brightness-110";
-          btnConfirm.innerText = "Sí, dale";
+            "flex-1 py-3 rounded-xl bg-pink-500 text-white font-bold text-sm shadow-lg";
+          btnConfirm.innerText = "Sí";
           btnConfirm.onclick = () => {
             if (onConfirm) onConfirm();
             closeModal();
           };
-          btnContainer.appendChild(btnConfirm);
+          btnContainer.append(btnCancel, btnConfirm);
         } else {
-          // Info (OK)
           const btnOk = document.createElement("button");
           btnOk.className =
-            "w-full py-3 rounded-xl bg-gradient-to-r from-pink-400 to-rose-400 dark:from-purple-600 dark:to-indigo-600 text-white font-bold text-sm shadow-lg active:scale-95 transition hover:brightness-110";
-          btnOk.innerText = "¡Entendido!";
+            "w-full py-3 rounded-xl bg-pink-400 text-white font-bold text-sm shadow-lg";
+          btnOk.innerText = "OK";
           btnOk.onclick = closeModal;
           btnContainer.appendChild(btnOk);
         }
-
-        // Animación Entrada
         overlay.classList.remove("hidden");
         setTimeout(() => {
           overlay.classList.remove("opacity-0");
-          content.classList.remove("scale-95");
           content.classList.add("scale-100");
         }, 10);
       }
-
       function closeModal() {
         const overlay = document.getElementById("modal-overlay");
-        const content = document.getElementById("modal-content");
-
-        // Animación Salida
         overlay.classList.add("opacity-0");
-        content.classList.remove("scale-100");
-        content.classList.add("scale-95");
-
-        setTimeout(() => {
-          overlay.classList.add("hidden");
-        }, 300);
+        setTimeout(() => overlay.classList.add("hidden"), 300);
       }
-
-      // --- INPUT & DATA LOGIC (Actualizada con Modales) ---
-
-      function saveDefaultRate() {
-        const newRate = settingsRateInput.value;
-        if (newRate) {
-          localStorage.setItem("hourlyRate", newRate);
-          rateInput.value = newRate;
-          showModal({
-            title: "¡Guardado!",
-            message: "Tu tarifa favorita se ha guardado correctamente. 🌸",
-            icon: isDark ? "💾" : "💖",
-            type: "info",
-          });
-        }
-      }
-
-      function addEntry() {
-        const rate = parseFloat(rateInput.value);
-        const date = dateInput.value;
-        const start = startInput.value;
-        const end = endInput.value;
-
-        if (!rate || !date || !start || !end) {
-          showModal({
-            title: "¡Ups!",
-            message: "Faltan datos por rellenar. <br>¡No seas vaga! 😋",
-            icon: "🤔",
-            type: "info",
-          });
-          return;
-        }
-
-        if (!localStorage.getItem("hourlyRate")) {
-          localStorage.setItem("hourlyRate", rate);
-        }
-
-        const startTime = new Date(`2000-01-01T${start}`);
-        let endTime = new Date(`2000-01-01T${end}`);
-        if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
-
-        const diffMs = endTime - startTime;
-        const diffHrs = diffMs / (1000 * 60 * 60);
-        const earned = diffHrs * rate;
-
-        const newEntry = {
-          id: Date.now(),
-          date: date,
-          start: start,
-          end: end,
-          rate: rate,
-          hours: diffHrs.toFixed(2),
-          earned: earned.toFixed(2),
-        };
-
-        entries.push(newEntry);
-        startInput.value = "";
-        endInput.value = "";
-
-        updateApp();
-
-        showModal({
-          title: "¡Apuntado!",
-          message: `Has ganado <b>${earned.toFixed(2)}€</b> en este turno. <br>¡Buen trabajo! ✨`,
-          icon: isDark ? "🦇" : "🎀",
-          type: "info",
-        });
-      }
-
-      function deleteEntry(id) {
-        showModal({
-          title: "¿Borrar turno?",
-          message:
-            "Esta acción no se puede deshacer. <br>¿Seguro que quieres borrarlo? 💔",
-          icon: "🗑️",
-          type: "confirm",
-          onConfirm: () => {
-            entries = entries.filter((entry) => entry.id !== id);
-            updateApp();
-          },
-        });
-      }
-
-      function clearAllData() {
-        showModal({
-          title: "¿ESTÁS SEGURA?",
-          message:
-            "Vas a borrar <b>TODO</b> tu historial. <br>No podrás recuperarlo. 😱",
-          icon: "🔥",
-          type: "confirm",
-          onConfirm: () => {
-            entries = [];
-            updateApp();
-            showModal({
-              title: "Borrado",
-              message: "Historial eliminado.",
-              icon: "🧹",
-            });
-          },
-        });
-      }
-
-      function saveData() {
-        localStorage.setItem("workEntries", JSON.stringify(entries));
-      }
-
-      // --- RENDERIZADO LISTA ---
-      function renderEntries() {
-        listContainer.innerHTML = "";
-
-        if (entries.length === 0) {
-          listContainer.innerHTML = `
-                    <div class="text-center py-10 opacity-50 flex flex-col items-center">
-                        <i class="fa-solid fa-ghost text-4xl mb-2 text-pink-300 dark:text-purple-700"></i>
-                        <p class="font-kawaii text-sm">Lista vacía...</p>
-                    </div>`;
-          totalEarningsEl.innerText = "0.00";
-          return;
-        }
-
-        let totalEarned = entries.reduce(
-          (acc, curr) => acc + parseFloat(curr.earned),
-          0,
-        );
-        totalEarningsEl.innerText = totalEarned.toFixed(2);
-
-        const grouped = {};
-        entries.forEach((entry) => {
-          if (!grouped[entry.date]) grouped[entry.date] = [];
-          grouped[entry.date].push(entry);
-        });
-
-        Object.keys(grouped).forEach((dateKey) => {
-          const dayEntries = grouped[dateKey];
-          const dayTotal = dayEntries.reduce(
-            (sum, e) => sum + parseFloat(e.earned),
-            0,
-          );
-          const dateObj = new Date(dateKey);
-          const dayName = dateObj.toLocaleDateString("es-ES", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          });
-
-          const dayContainer = document.createElement("div");
-          dayContainer.className =
-            "bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-pink-100 dark:border-purple-900 overflow-hidden animate-fade-in";
-
-          let shiftsHTML = "";
-          dayEntries.forEach((shift) => {
-            shiftsHTML += `
-                        <div class="flex justify-between items-center py-3 px-4 border-t border-gray-100 dark:border-gray-700 first:border-t-0 hover:bg-pink-50 dark:hover:bg-zinc-700/50 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-pink-100 dark:bg-purple-900/50 text-pink-500 dark:text-purple-300 rounded-lg p-2 text-xs font-bold min-w-[60px] text-center">
-                                    ${shift.start}<br>⬇<br>${shift.end}
-                                </div>
-                                <div>
-                                    <div class="text-sm font-bold text-gray-700 dark:text-gray-200">${shift.hours} horas</div>
-                                    <div class="text-xs text-gray-400">@ ${shift.rate}€/h</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="font-chunky text-lg text-kitty-text dark:text-kuromi-accent">+${shift.earned}€</span>
-                                <button onclick="deleteEntry(${shift.id})" class="text-gray-300 hover:text-red-400 p-1">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-          });
-
-          dayContainer.innerHTML = `
-                    <div class="bg-pink-50 dark:bg-zinc-900 px-4 py-2 flex justify-between items-center">
-                        <span class="font-bold text-sm text-gray-600 dark:text-gray-300 capitalize">${dayName}</span>
-                        <span class="bg-white dark:bg-zinc-700 px-2 py-0.5 rounded-md text-xs font-bold text-pink-500 dark:text-purple-300">Total: ${dayTotal.toFixed(2)}€</span>
-                    </div>
-                    <div>${shiftsHTML}</div>
-                `;
-
-          listContainer.appendChild(dayContainer);
-        });
-      }
-
-      // --- EXPORTAR / IMPORTAR (AJUSTES) ---
       function backupData() {
-        const backup = {
-          entries: entries,
-          hourlyRate: localStorage.getItem("hourlyRate"),
-          theme: localStorage.getItem("theme"),
+        const b = {
+          entries,
+          hourlyRate: savedRate,
+          theme: isDark ? "dark" : "light",
           backupDate: new Date().toISOString(),
         };
-        const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        const blob = new Blob([JSON.stringify(b)], {
           type: "application/json",
         });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `workie_backup_${new Date().toISOString().slice(0, 10)}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `workie_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
       }
-
       function restoreData(input) {
         const file = input.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
+        const r = new FileReader();
+        r.onload = (e) => {
           try {
-            const data = JSON.parse(e.target.result);
-
-            showModal({
-              title: "¿Restaurar Copia?",
-              message: `Se encontraron ${data.entries?.length || 0} registros. <br>Esto reemplazará tu historial actual.`,
-              icon: "📦",
-              type: "confirm",
-              onConfirm: () => {
-                if (data.entries)
-                  localStorage.setItem(
-                    "workEntries",
-                    JSON.stringify(data.entries),
-                  );
-                if (data.hourlyRate)
-                  localStorage.setItem("hourlyRate", data.hourlyRate);
-                if (data.theme) localStorage.setItem("theme", data.theme);
-
-                showModal({
-                  title: "¡Restaurado!",
-                  message: "La página se recargará ahora.",
-                  icon: "🔄",
-                  type: "info",
-                  onConfirm: () => location.reload(), // Solo recarga al aceptar el modal
-                });
-                // Opcional: recargar tras un pequeño delay si el usuario no pulsa nada
-                setTimeout(() => location.reload(), 2000);
-              },
-            });
-          } catch (error) {
-            showModal({
-              title: "Error",
-              message: "El archivo no es válido.",
-              icon: "❌",
-              type: "info",
-            });
+            const d = JSON.parse(e.target.result);
+            if (d.entries) {
+              entries = d.entries;
+              if (d.hourlyRate)
+                localStorage.setItem("hourlyRate", d.hourlyRate);
+              if (d.theme) localStorage.setItem("theme", d.theme);
+              updateApp();
+              showModal({
+                title: "Restaurado",
+                message: "Datos recuperados",
+                icon: "🔄",
+              });
+            }
+          } catch (e) {
+            alert("Error archivo");
           }
         };
-        reader.readAsText(file);
+        r.readAsText(file);
         input.value = "";
       }
-
-      function copyToClipboard() {
-        if (entries.length === 0) {
-          showModal({
-            title: "Ups",
-            message: "Nada que copiar todavía. 🕸️",
-            icon: "👻",
-          });
-          return;
-        }
-
-        const grouped = {};
-        entries.forEach((e) => {
-          if (!grouped[e.date]) grouped[e.date] = [];
-          grouped[e.date].push(e);
+      function clearAllData() {
+        entries = [];
+        updateApp();
+        showModal({
+          title: "Borrado",
+          message: "Historial limpio",
+          icon: "🧹",
         });
-        let text = "✨ WORKIE - Historial ✨\n\n";
-        Object.keys(grouped).forEach((dateKey) => {
-          const dayEntries = grouped[dateKey];
-          const dateObj = new Date(dateKey);
-          const dayStr = dateObj.toLocaleDateString("es-ES", {
-            weekday: "short",
-            day: "numeric",
-            month: "numeric",
-          });
-          const dayTotal = dayEntries.reduce(
-            (sum, e) => sum + parseFloat(e.earned),
-            0,
-          );
-          text += `📅 ${dayStr} (Total: ${dayTotal.toFixed(2)}€)\n`;
-          dayEntries.forEach((e) => {
-            text += `   ▫️ ${e.start}-${e.end} (${e.hours}h) -> ${e.earned}€\n`;
-          });
-          text += "\n";
-        });
-        const totalE = entries.reduce(
-          (acc, curr) => acc + parseFloat(curr.earned),
-          0,
-        );
-        text += `💖 TOTAL ACUMULADO: ${totalE.toFixed(2)}€ 💖`;
-
-        const el = document.createElement("textarea");
-        el.value = text;
-        el.setAttribute("readonly", "");
-        el.style.position = "absolute";
-        el.style.left = "-9999px";
-        document.body.appendChild(el);
-        el.select();
-        try {
-          document.execCommand("copy");
-          showModal({
-            title: "¡Copiado!",
-            message: "Ya puedes pegarlo en tus Notas. 📋",
-            icon: "✅",
-            type: "info",
-          });
-        } catch (err) {
-          alert("Error.");
-        }
-        document.body.removeChild(el);
       }
     </script>
   </body>
