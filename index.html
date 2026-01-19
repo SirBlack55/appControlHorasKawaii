@@ -47,13 +47,18 @@
               "kitty-card": "#ffffff",
               "kitty-accent": "#ff69b4",
               "kitty-text": "#d63384",
+              "kitty-soft": "#fce7f3",
 
               // Paleta Kuromi
               "kuromi-bg": "#1a1a1a",
               "kuromi-card": "#2d2d2d",
-              "kuromi-accent": "#a78bfa", // Lila neón
+              "kuromi-accent": "#a78bfa",
               "kuromi-text": "#e9d5ff",
               "kuromi-dark": "#000000",
+            },
+            spacing: {
+              "safe-top": "env(safe-area-inset-top)",
+              "safe-bottom": "env(safe-area-inset-bottom)",
             },
           },
         },
@@ -68,6 +73,25 @@
         transition:
           background-color 0.5s ease,
           color 0.5s ease;
+      }
+
+      /* Corrección CRÍTICA para el Notch del iPhone */
+      header {
+        padding-top: env(safe-area-inset-top);
+        height: calc(70px + env(safe-area-inset-top));
+      }
+
+      main {
+        padding-top: calc(80px + env(safe-area-inset-top));
+        padding-bottom: calc(
+          100px + env(safe-area-inset-bottom)
+        ); /* Espacio para la navbar */
+      }
+
+      /* Navbar inferior */
+      .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+        height: calc(70px + env(safe-area-inset-bottom));
       }
 
       /* Ocultar scrollbar pero permitir scroll */
@@ -86,7 +110,7 @@
         transition: all 0.2s ease;
       }
 
-      /* Estilo iOS para inputs de fecha/hora */
+      /* Estilo iOS para inputs */
       input[type="date"],
       input[type="time"],
       input[type="number"] {
@@ -94,7 +118,7 @@
         -webkit-appearance: none;
       }
 
-      /* Fondo con patrón lindo (Lunares o Calaveras sutiles con CSS) */
+      /* Fondos */
       .bg-pattern-light {
         background-color: #fff0f5;
         background-image: radial-gradient(#ffb7b2 2px, transparent 2px);
@@ -107,7 +131,6 @@
         background-size: 20px 20px;
       }
 
-      /* Botón flotante animado */
       @keyframes float {
         0% {
           transform: translateY(0px);
@@ -122,19 +145,67 @@
       .floating-icon {
         animation: float 3s ease-in-out infinite;
       }
+
+      /* Estilos Calendario */
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+      }
+      .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px; /* Círculo perfecto */
+        font-size: 0.8rem;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .calendar-day.empty {
+        background: transparent;
+        cursor: default;
+      }
+
+      .has-work::after {
+        content: "";
+        position: absolute;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: currentColor;
+      }
+
+      /* Animación Fade In para pestañas */
+      .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
   </head>
   <body
-    class="bg-pattern-light min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-500 pb-20 safe-area-padding"
+    class="bg-pattern-light min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-500 pb-safe-bottom"
   >
-    <!-- Área segura superior (Notch) -->
-    <div class="h-safe-top w-full"></div>
-
-    <!-- HEADER / NAV -->
+    <!-- HEADER -->
     <header
-      class="fixed top-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-pink-200 dark:border-purple-900 shadow-sm transition-colors duration-500 pt-safe-top"
+      class="fixed top-0 left-0 w-full z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-pink-200 dark:border-purple-900 shadow-sm transition-colors duration-500 flex items-center"
     >
-      <div class="flex justify-between items-center px-6 py-4">
+      <div class="w-full flex justify-between items-center px-6 pb-2 pt-2">
         <div class="flex items-center gap-2">
           <i
             class="fa-solid fa-heart text-kitty-accent dark:text-kuromi-accent text-2xl floating-icon"
@@ -146,10 +217,9 @@
           </h1>
         </div>
 
-        <!-- Botón Toggle Tema -->
         <button
           onclick="toggleTheme()"
-          class="relative w-14 h-8 bg-pink-200 dark:bg-purple-900 rounded-full shadow-inner transition-colors duration-300 focus:outline-none"
+          class="relative w-14 h-8 bg-pink-200 dark:bg-purple-900 rounded-full shadow-inner transition-colors duration-300 focus:outline-none touch-manipulation"
         >
           <div
             id="toggle-circle"
@@ -162,184 +232,397 @@
     </header>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <main class="pt-24 px-5 max-w-md mx-auto space-y-6">
-      <!-- TARJETA DE RESUMEN (Stats) -->
-      <div
-        class="bg-white dark:bg-zinc-800 rounded-3xl p-6 shadow-lg border-2 border-pink-100 dark:border-purple-900 relative overflow-hidden transition-colors duration-500"
-      >
-        <!-- Decoración de fondo -->
+    <main class="px-5 max-w-md mx-auto space-y-6">
+      <!-- PESTAÑA 1: INICIO (Fichar) -->
+      <div id="tab-home" class="tab-content active">
+        <!-- Tarjeta Resumen -->
         <div
-          class="absolute -right-4 -top-4 text-8xl opacity-10 rotate-12 select-none"
+          class="bg-white dark:bg-zinc-800 rounded-3xl p-6 shadow-lg border-2 border-pink-100 dark:border-purple-900 relative overflow-hidden transition-colors duration-500 mb-6"
         >
-          <span class="dark:hidden">💖</span>
-          <span class="hidden dark:block">💀</span>
-        </div>
-
-        <h2
-          class="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1"
-        >
-          Total Ganado
-        </h2>
-        <div class="flex items-baseline gap-1">
-          <span
-            class="text-4xl font-chunky text-kitty-text dark:text-kuromi-accent"
-            id="total-earnings"
-            >0.00</span
+          <div
+            class="absolute -right-4 -top-4 text-8xl opacity-10 rotate-12 select-none"
           >
-          <span class="text-xl font-bold text-gray-500">€</span>
-        </div>
-        <p class="text-xs text-gray-400 mt-2">
-          En <span id="total-hours">0</span> horas trabajadas
-        </p>
-      </div>
-
-      <!-- FORMULARIO DE ENTRADA -->
-      <div
-        class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur rounded-3xl p-6 shadow-xl border border-pink-200 dark:border-purple-800 transition-colors duration-500"
-      >
-        <h3
-          class="font-chunky text-xl text-center mb-4 text-gray-700 dark:text-white"
-        >
-          <i
-            class="fa-solid fa-pen-fancy mr-2 text-pink-400 dark:text-purple-400"
-          ></i
-          >Nuevo Turno
-        </h3>
-
-        <!-- Configuración Rápida (Pago Hora) -->
-        <div class="mb-4">
-          <label class="text-xs font-bold text-gray-500 ml-2"
-            >Pago por Hora (€)</label
-          >
-          <input
-            type="number"
-            id="hourly-rate"
-            class="w-full bg-pink-50 dark:bg-zinc-800 rounded-2xl px-4 py-3 mt-1 font-bold text-lg text-kitty-text dark:text-kuromi-accent border-2 border-transparent focus:border-pink-300 dark:focus:border-purple-500 transition-colors placeholder-gray-400"
-            placeholder="Ej: 10.50"
-            step="0.50"
-          />
-        </div>
-
-        <!-- Fecha -->
-        <div class="mb-4">
-          <label class="text-xs font-bold text-gray-500 ml-2">Fecha</label>
-          <input
-            type="date"
-            id="work-date"
-            class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-4 py-3 mt-1 text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700 focus:border-pink-300 dark:focus:border-purple-500"
-          />
-        </div>
-
-        <!-- Horas (Grid) -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <label class="text-xs font-bold text-gray-500 ml-2">Entrada</label>
-            <input
-              type="time"
-              id="start-time"
-              class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-2 py-3 mt-1 text-center font-bold text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
-            />
+            <span class="dark:hidden">💖</span>
+            <span class="hidden dark:block">💀</span>
           </div>
-          <div>
-            <label class="text-xs font-bold text-gray-500 ml-2">Salida</label>
-            <input
-              type="time"
-              id="end-time"
-              class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-2 py-3 mt-1 text-center font-bold text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
-            />
+          <h2
+            class="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1"
+          >
+            Total Histórico
+          </h2>
+          <div class="flex items-baseline gap-1">
+            <span
+              class="text-4xl font-chunky text-kitty-text dark:text-kuromi-accent"
+              id="total-earnings"
+              >0.00</span
+            >
+            <span class="text-xl font-bold text-gray-500">€</span>
           </div>
         </div>
 
-        <!-- Botón Guardar -->
-        <button
-          onclick="addEntry()"
-          class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-400 to-rose-400 dark:from-purple-600 dark:to-indigo-600 text-white font-chunky text-lg shadow-lg shadow-pink-200 dark:shadow-purple-900/50 transform active:scale-95 transition-all flex justify-center items-center gap-2"
+        <!-- Formulario de Entrada -->
+        <div
+          class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur rounded-3xl p-6 shadow-xl border border-pink-200 dark:border-purple-800 transition-colors duration-500"
         >
-          <i class="fa-solid fa-check"></i> ¡Apuntar!
-        </button>
-      </div>
-
-      <!-- LISTA DE HISTORIAL -->
-      <div class="pb-24">
-        <div class="flex justify-between items-end mb-3 px-2">
-          <h3 class="font-chunky text-lg text-gray-600 dark:text-gray-300">
-            Historial
+          <h3
+            class="font-chunky text-xl text-center mb-4 text-gray-700 dark:text-white"
+          >
+            <i
+              class="fa-solid fa-pen-fancy mr-2 text-pink-400 dark:text-purple-400"
+            ></i
+            >Nuevo Turno
           </h3>
 
-          <!-- Botonera Acciones -->
-          <div class="flex gap-2">
+          <div class="mb-4">
+            <label class="text-xs font-bold text-gray-500 ml-2"
+              >Pago por Hora (€)</label
+            >
+            <input
+              type="number"
+              id="hourly-rate"
+              class="w-full bg-pink-50 dark:bg-zinc-800 rounded-2xl px-4 py-3 mt-1 font-bold text-lg text-kitty-text dark:text-kuromi-accent border-2 border-transparent focus:border-pink-300 dark:focus:border-purple-500 transition-colors placeholder-gray-400"
+              placeholder="Ej: 10.50"
+              step="0.50"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label class="text-xs font-bold text-gray-500 ml-2">Fecha</label>
+            <input
+              type="date"
+              id="work-date"
+              class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-4 py-3 mt-1 text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700 focus:border-pink-300 dark:focus:border-purple-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label class="text-xs font-bold text-gray-500 ml-2"
+                >Entrada</label
+              >
+              <input
+                type="time"
+                id="start-time"
+                class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-2 py-3 mt-1 text-center font-bold text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
+              />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-gray-500 ml-2">Salida</label>
+              <input
+                type="time"
+                id="end-time"
+                class="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl px-2 py-3 mt-1 text-center font-bold text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
+              />
+            </div>
+          </div>
+
+          <button
+            onclick="addEntry()"
+            class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-400 to-rose-400 dark:from-purple-600 dark:to-indigo-600 text-white font-chunky text-lg shadow-lg shadow-pink-200 dark:shadow-purple-900/50 transform active:scale-95 transition-all flex justify-center items-center gap-2"
+          >
+            <i class="fa-solid fa-check"></i> ¡Apuntar!
+          </button>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: AGENDA (Calendario + Lista) -->
+      <div id="tab-calendar" class="tab-content">
+        <!-- Widget de Calendario -->
+        <div
+          class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur rounded-3xl p-5 shadow-xl border border-pink-200 dark:border-purple-800 transition-colors duration-500 mb-6"
+        >
+          <!-- Header Calendario -->
+          <div class="flex justify-between items-center mb-4">
+            <button
+              onclick="changeMonth(-1)"
+              class="w-8 h-8 rounded-full bg-pink-100 dark:bg-zinc-700 text-pink-500 dark:text-purple-300 flex items-center justify-center active:scale-90 transition"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h3
+              id="calendar-month-year"
+              class="font-chunky text-lg capitalize text-gray-700 dark:text-gray-200"
+            >
+              Enero 2024
+            </h3>
+            <button
+              onclick="changeMonth(1)"
+              class="w-8 h-8 rounded-full bg-pink-100 dark:bg-zinc-700 text-pink-500 dark:text-purple-300 flex items-center justify-center active:scale-90 transition"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Días Semana -->
+          <div
+            class="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold text-gray-400"
+          >
+            <div>L</div>
+            <div>M</div>
+            <div>X</div>
+            <div>J</div>
+            <div>V</div>
+            <div>S</div>
+            <div>D</div>
+          </div>
+
+          <!-- Grid Días -->
+          <div id="calendar-days" class="calendar-grid mb-4">
+            <!-- JS rellena esto -->
+          </div>
+
+          <!-- Resumen Mensual -->
+          <div
+            class="bg-pink-50 dark:bg-zinc-800/50 rounded-xl p-3 flex justify-between items-center border border-pink-100 dark:border-purple-900/30"
+          >
+            <span class="text-xs font-bold text-gray-500 dark:text-gray-400"
+              >Total este mes:</span
+            >
+            <span
+              id="month-earnings"
+              class="font-chunky text-lg text-kitty-text dark:text-kuromi-accent"
+              >0.00€</span
+            >
+          </div>
+        </div>
+
+        <!-- Lista de Historial -->
+        <div>
+          <div class="flex justify-between items-end mb-3 px-2">
+            <h3 class="font-chunky text-lg text-gray-600 dark:text-gray-300">
+              Historial
+            </h3>
             <button
               onclick="copyToClipboard()"
-              class="text-xs bg-white dark:bg-zinc-800 px-3 py-1 rounded-full shadow text-blue-400 dark:text-blue-300 font-bold border border-pink-100 dark:border-purple-900 active:scale-95 flex items-center gap-1"
+              class="text-xs bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-full shadow text-blue-400 dark:text-blue-300 font-bold border border-pink-100 dark:border-purple-900 active:scale-95 flex items-center gap-1"
             >
-              <i class="fa-regular fa-copy"></i> Copiar
+              <i class="fa-regular fa-copy"></i> Copiar Notas
+            </button>
+          </div>
+
+          <div id="entries-list" class="space-y-4">
+            <!-- Se rellena con JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 3: AJUSTES -->
+      <div id="tab-settings" class="tab-content">
+        <h3
+          class="font-chunky text-2xl text-gray-700 dark:text-white mb-6 ml-2"
+        >
+          Ajustes
+        </h3>
+
+        <!-- Configuración General -->
+        <div
+          class="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-purple-900/30 mb-6"
+        >
+          <h4
+            class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"
+          >
+            Configuración
+          </h4>
+
+          <div class="mb-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-300"
+              >Tarifa por defecto (€/h)</label
+            >
+            <div class="flex gap-2 mt-2">
+              <input
+                type="number"
+                id="settings-rate"
+                class="flex-1 bg-gray-50 dark:bg-zinc-800 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700"
+                placeholder="10.00"
+              />
+              <button
+                onclick="saveDefaultRate()"
+                class="bg-pink-100 dark:bg-purple-900 text-pink-500 dark:text-purple-300 px-4 rounded-xl font-bold text-sm"
+              >
+                Guardar
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              Este valor aparecerá automáticamente cuando crees un nuevo turno.
+            </p>
+          </div>
+        </div>
+
+        <!-- Gestión de Datos -->
+        <div
+          class="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-purple-900/30 mb-6"
+        >
+          <h4
+            class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"
+          >
+            Copia de Seguridad
+          </h4>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <button
+              onclick="backupData()"
+              class="flex flex-col items-center justify-center p-4 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 text-green-600 dark:text-green-400 active:scale-95 transition-transform"
+            >
+              <i class="fa-solid fa-cloud-arrow-down text-2xl mb-2"></i>
+              <span class="text-xs font-bold">Guardar Copia</span>
             </button>
             <button
-              onclick="exportData()"
-              class="text-xs bg-white dark:bg-zinc-800 px-3 py-1 rounded-full shadow text-pink-500 dark:text-purple-400 font-bold border border-pink-100 dark:border-purple-900 active:scale-95 flex items-center gap-1"
+              onclick="document.getElementById('file-input').click()"
+              class="flex flex-col items-center justify-center p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 active:scale-95 transition-transform"
             >
-              <i class="fa-solid fa-file-export"></i> CSV
+              <i class="fa-solid fa-cloud-arrow-up text-2xl mb-2"></i>
+              <span class="text-xs font-bold">Restaurar</span>
             </button>
           </div>
+
+          <input
+            type="file"
+            id="file-input"
+            accept=".json"
+            class="hidden"
+            onchange="restoreData(this)"
+          />
+          <p class="text-xs text-gray-400 text-center">
+            Guarda una copia de tus datos por si borras el historial o cambias
+            de móvil.
+          </p>
         </div>
 
-        <div id="entries-list" class="space-y-3">
-          <!-- Las tarjetas se insertan aquí con JS -->
-          <div class="text-center py-10 opacity-50">
-            <i class="fa-solid fa-cat text-4xl mb-2"></i>
-            <p>No hay turnos aún...</p>
-          </div>
-        </div>
-
-        <!-- Botón Borrar Todo (Discreto) -->
-        <div class="text-center mt-8">
+        <!-- Zona de Peligro -->
+        <div
+          class="bg-red-50 dark:bg-red-900/10 rounded-3xl p-5 border border-red-100 dark:border-red-900/30"
+        >
+          <h4
+            class="text-xs font-bold text-red-400 uppercase tracking-widest mb-4"
+          >
+            Zona de Peligro
+          </h4>
           <button
             onclick="clearAllData()"
-            class="text-xs text-red-300 hover:text-red-500 underline decoration-dotted"
+            class="w-full py-3 bg-white dark:bg-zinc-800 text-red-500 dark:text-red-400 font-bold rounded-xl border border-red-200 dark:border-red-900 shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
           >
-            Borrar todo el historial
+            <i class="fa-solid fa-trash-can"></i> Borrar Todo
           </button>
+        </div>
+
+        <div class="text-center mt-8 opacity-40">
+          <p class="font-kawaii text-xs">Workie App v2.0</p>
         </div>
       </div>
     </main>
 
+    <!-- NAVIGATION BAR -->
+    <nav
+      class="bottom-nav fixed bottom-0 left-0 w-full bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 z-50 flex justify-around items-start pt-3 transition-colors duration-500"
+    >
+      <button
+        onclick="switchTab('home')"
+        id="nav-home"
+        class="flex flex-col items-center gap-1 w-16 text-pink-500 dark:text-purple-400 transition-colors"
+      >
+        <i class="fa-solid fa-pen-to-square text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Fichar</span>
+      </button>
+      <button
+        onclick="switchTab('calendar')"
+        id="nav-calendar"
+        class="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-pink-400 dark:hover:text-purple-300 transition-colors"
+      >
+        <i class="fa-solid fa-calendar-days text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Agenda</span>
+      </button>
+      <button
+        onclick="switchTab('settings')"
+        id="nav-settings"
+        class="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-pink-400 dark:hover:text-purple-300 transition-colors"
+      >
+        <i class="fa-solid fa-gear text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Ajustes</span>
+      </button>
+    </nav>
+
     <!-- SCRIPTS -->
     <script>
-      // --- LÓGICA DE LA APP ---
-
-      // Elementos del DOM
+      // --- ELEMENTOS Y ESTADO ---
       const toggleBtn = document.getElementById("toggle-circle");
       const listContainer = document.getElementById("entries-list");
       const totalEarningsEl = document.getElementById("total-earnings");
-      const totalHoursEl = document.getElementById("total-hours");
+
+      // Widget Calendario
+      const calendarMonthYear = document.getElementById("calendar-month-year");
+      const calendarGrid = document.getElementById("calendar-days");
+      const monthEarningsEl = document.getElementById("month-earnings");
 
       // Inputs
       const rateInput = document.getElementById("hourly-rate");
+      const settingsRateInput = document.getElementById("settings-rate"); // Nuevo input en ajustes
       const dateInput = document.getElementById("work-date");
       const startInput = document.getElementById("start-time");
       const endInput = document.getElementById("end-time");
 
-      // Estado
       let entries = JSON.parse(localStorage.getItem("workEntries")) || [];
       let savedRate = localStorage.getItem("hourlyRate") || "";
       let isDark = localStorage.getItem("theme") === "dark";
 
-      // Inicialización
+      // Fecha actual del calendario
+      let currentCalendarDate = new Date();
+
       window.onload = () => {
-        // Establecer fecha de hoy por defecto
         dateInput.valueAsDate = new Date();
 
-        // Cargar tasa guardada
-        if (savedRate) rateInput.value = savedRate;
+        // Cargar tarifa guardada en ambos inputs
+        if (savedRate) {
+          rateInput.value = savedRate;
+          settingsRateInput.value = savedRate;
+        }
 
-        // Cargar tema
         applyTheme();
-
-        // Renderizar lista
-        renderEntries();
+        updateApp();
       };
 
-      // --- GESTIÓN DEL TEMA ---
+      // --- SISTEMA DE PESTAÑAS ---
+      function switchTab(tabName) {
+        // Ocultar todas las pestañas
+        document.querySelectorAll(".tab-content").forEach((el) => {
+          el.classList.remove("active");
+        });
+
+        // Mostrar la seleccionada
+        document.getElementById(`tab-${tabName}`).classList.add("active");
+
+        // Actualizar botones de navegación (colores)
+        const navIds = ["nav-home", "nav-calendar", "nav-settings"];
+        navIds.forEach((id) => {
+          const el = document.getElementById(id);
+          // Reset a gris
+          el.className =
+            "flex flex-col items-center gap-1 w-16 text-gray-400 transition-colors";
+        });
+
+        // Activar color del botón actual
+        const activeNav = document.getElementById(`nav-${tabName}`);
+        activeNav.className =
+          "flex flex-col items-center gap-1 w-16 text-pink-500 dark:text-purple-400 transition-colors scale-110";
+
+        // Si vamos al calendario, renderizarlo de nuevo para asegurar tamaño correcto
+        if (tabName === "calendar") {
+          renderCalendar();
+        }
+      }
+
+      // --- CORE FUNCTIONS ---
+      function updateApp() {
+        entries.sort((a, b) => {
+          const dateA = new Date(a.date + "T" + a.start);
+          const dateB = new Date(b.date + "T" + b.start);
+          return dateB - dateA;
+        });
+
+        saveData();
+        renderEntries();
+        renderCalendar();
+      }
+
       function toggleTheme() {
         isDark = !isDark;
         localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -349,19 +632,14 @@
       function applyTheme() {
         const html = document.documentElement;
         const body = document.body;
-
         if (isDark) {
           html.classList.add("dark");
           body.classList.remove("bg-pattern-light");
           body.classList.add("bg-pattern-dark");
-
-          // Animación botón
           toggleBtn.style.transform = "translateX(24px)";
           toggleBtn.innerText = "💀";
           toggleBtn.classList.remove("bg-white", "text-pink-500");
           toggleBtn.classList.add("bg-zinc-800", "text-purple-500");
-
-          // Meta theme color
           document
             .querySelector('meta[name="theme-color"]')
             .setAttribute("content", "#18181b");
@@ -369,21 +647,98 @@
           html.classList.remove("dark");
           body.classList.remove("bg-pattern-dark");
           body.classList.add("bg-pattern-light");
-
-          // Animación botón
           toggleBtn.style.transform = "translateX(0px)";
           toggleBtn.innerText = "🎀";
           toggleBtn.classList.remove("bg-zinc-800", "text-purple-500");
           toggleBtn.classList.add("bg-white", "text-pink-500");
-
-          // Meta theme color
           document
             .querySelector('meta[name="theme-color"]')
             .setAttribute("content", "#fce7f3");
         }
       }
 
-      // --- FUNCIONES PRINCIPALES ---
+      // --- CALENDARIO ---
+      function changeMonth(delta) {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+        renderCalendar();
+      }
+
+      function renderCalendar() {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        calendarMonthYear.textContent = currentCalendarDate.toLocaleDateString(
+          "es-ES",
+          { month: "long", year: "numeric" },
+        );
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+
+        let startDay = firstDay.getDay() - 1;
+        if (startDay === -1) startDay = 6;
+
+        calendarGrid.innerHTML = "";
+        let monthTotal = 0;
+
+        for (let i = 0; i < startDay; i++) {
+          const empty = document.createElement("div");
+          empty.className = "calendar-day empty";
+          calendarGrid.appendChild(empty);
+        }
+
+        const today = new Date();
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dayWork = entries.filter((e) => e.date === dateStr);
+          const hasWork = dayWork.length > 0;
+
+          if (hasWork) {
+            dayWork.forEach((w) => (monthTotal += parseFloat(w.earned)));
+          }
+
+          const dayEl = document.createElement("div");
+          let classes =
+            "calendar-day font-bold text-gray-600 dark:text-gray-400";
+
+          if (
+            day === today.getDate() &&
+            month === today.getMonth() &&
+            year === today.getFullYear()
+          ) {
+            classes +=
+              " border-2 border-pink-400 dark:border-purple-400 text-pink-500 dark:text-purple-300";
+          }
+
+          if (hasWork) {
+            classes +=
+              " bg-pink-400 dark:bg-purple-600 text-white shadow-md has-work";
+            dayEl.onclick = () =>
+              alert(
+                `📅 ${day}/${month + 1}\n💰 Ganado: ${dayWork.reduce((a, b) => a + parseFloat(b.earned), 0).toFixed(2)}€`,
+              );
+          } else {
+            classes += " hover:bg-pink-100 dark:hover:bg-zinc-700";
+          }
+
+          dayEl.className = classes;
+          dayEl.innerText = day;
+          calendarGrid.appendChild(dayEl);
+        }
+        monthEarningsEl.innerText = `${monthTotal.toFixed(2)}€`;
+      }
+
+      // --- INPUT & DATA LOGIC ---
+
+      function saveDefaultRate() {
+        const newRate = settingsRateInput.value;
+        if (newRate) {
+          localStorage.setItem("hourlyRate", newRate);
+          rateInput.value = newRate; // Actualizar también el formulario principal
+          alert("¡Tarifa guardada! 🌸 Aparecerá por defecto.");
+        }
+      }
 
       function addEntry() {
         const rate = parseFloat(rateInput.value);
@@ -391,26 +746,22 @@
         const start = startInput.value;
         const end = endInput.value;
 
-        // Validaciones
         if (!rate || !date || !start || !end) {
-          alert("¡Ups! 🌸 Por favor rellena todos los campos para guardar.");
+          alert("¡Ups! 🌸 Faltan datos.");
           return;
         }
 
-        // Guardar tarifa preferida
-        localStorage.setItem("hourlyRate", rate);
-
-        // Calcular horas
-        const startTime = new Date(`2000-01-01T${start}`);
-        let endTime = new Date(`2000-01-01T${end}`);
-
-        // Si el turno termina al día siguiente (ej: 22:00 a 02:00)
-        if (endTime < startTime) {
-          endTime.setDate(endTime.getDate() + 1);
+        // Auto-guardar la tarifa usada como por defecto si no hay una
+        if (!localStorage.getItem("hourlyRate")) {
+          localStorage.setItem("hourlyRate", rate);
         }
 
+        const startTime = new Date(`2000-01-01T${start}`);
+        let endTime = new Date(`2000-01-01T${end}`);
+        if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
+
         const diffMs = endTime - startTime;
-        const diffHrs = diffMs / (1000 * 60 * 60); // Horas decimales
+        const diffHrs = diffMs / (1000 * 60 * 60);
         const earned = diffHrs * rate;
 
         const newEntry = {
@@ -423,31 +774,33 @@
           earned: earned.toFixed(2),
         };
 
-        entries.unshift(newEntry); // Añadir al principio
-        saveData();
-        renderEntries();
-
-        // Feedback visual suave
+        entries.push(newEntry);
         startInput.value = "";
         endInput.value = "";
-        // No borramos la fecha ni la tarifa porque suelen repetirse
+
+        updateApp();
+
+        // Opcional: Llevar al usuario a la agenda para ver el resultado
+        // switchTab('calendar');
+        alert("¡Apuntado! ✨");
       }
 
       function deleteEntry(id) {
-        if (confirm("¿Seguro que quieres borrar este registro? 💔")) {
+        if (confirm("¿Borrar este turno? 💔")) {
           entries = entries.filter((entry) => entry.id !== id);
-          saveData();
-          renderEntries();
+          updateApp();
         }
       }
 
       function clearAllData() {
         if (
-          confirm("¿ESTÁS SEGURA? Se borrarán todos tus datos para siempre. 😱")
+          confirm(
+            "¿Segura que quieres borrar TODO el historial? 😱\nEsta acción no se puede deshacer.",
+          )
         ) {
           entries = [];
-          saveData();
-          renderEntries();
+          updateApp();
+          alert("Historial borrado 🗑️");
         }
       }
 
@@ -455,11 +808,9 @@
         localStorage.setItem("workEntries", JSON.stringify(entries));
       }
 
+      // --- RENDERIZADO LISTA ---
       function renderEntries() {
         listContainer.innerHTML = "";
-
-        let totalEarned = 0;
-        let totalHours = 0;
 
         if (entries.length === 0) {
           listContainer.innerHTML = `
@@ -467,97 +818,152 @@
                         <i class="fa-solid fa-ghost text-4xl mb-2 text-pink-300 dark:text-purple-700"></i>
                         <p class="font-kawaii text-sm">Lista vacía...</p>
                     </div>`;
-        }
-
-        entries.forEach((entry) => {
-          totalEarned += parseFloat(entry.earned);
-          totalHours += parseFloat(entry.hours);
-
-          const dateObj = new Date(entry.date);
-          const dayName = dateObj.toLocaleDateString("es-ES", {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          });
-
-          const card = document.createElement("div");
-          card.className = `bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-sm border-l-4 border-pink-300 dark:border-purple-600 flex justify-between items-center animate-fade-in relative group`;
-
-          card.innerHTML = `
-                    <div>
-                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">${dayName}</div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-chunky text-lg dark:text-gray-200">${entry.start} - ${entry.end}</span>
-                            <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md text-gray-500">${entry.hours}h</span>
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">@ ${entry.rate}€/h</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xl font-bold text-kitty-text dark:text-kuromi-accent">+${entry.earned}€</div>
-                        <button onclick="deleteEntry(${entry.id})" class="text-gray-300 hover:text-red-400 dark:hover:text-red-400 mt-1 transition-colors p-2 -mr-2">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
-                    </div>
-                `;
-          listContainer.appendChild(card);
-        });
-
-        // Actualizar totales generales
-        totalEarningsEl.innerText = totalEarned.toFixed(2);
-        totalHoursEl.innerText = totalHours.toFixed(1);
-      }
-
-      function exportData() {
-        if (entries.length === 0) {
-          alert("Nada que exportar todavía 🕸️");
+          totalEarningsEl.innerText = "0.00";
           return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Fecha,Entrada,Salida,Horas,Tarifa,Ganado\n"; // Cabecera
+        let totalEarned = entries.reduce(
+          (acc, curr) => acc + parseFloat(curr.earned),
+          0,
+        );
+        totalEarningsEl.innerText = totalEarned.toFixed(2);
 
-        entries.forEach((e) => {
-          const row = `${e.date},${e.start},${e.end},${e.hours},${e.rate},${e.earned}`;
-          csvContent += row + "\n";
+        const grouped = {};
+        entries.forEach((entry) => {
+          if (!grouped[entry.date]) grouped[entry.date] = [];
+          grouped[entry.date].push(entry);
         });
 
-        const encodedUri = encodeURI(csvContent);
+        Object.keys(grouped).forEach((dateKey) => {
+          const dayEntries = grouped[dateKey];
+          const dayTotal = dayEntries.reduce(
+            (sum, e) => sum + parseFloat(e.earned),
+            0,
+          );
+          const dateObj = new Date(dateKey);
+          const dayName = dateObj.toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          });
+
+          const dayContainer = document.createElement("div");
+          dayContainer.className =
+            "bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-pink-100 dark:border-purple-900 overflow-hidden animate-fade-in";
+
+          let shiftsHTML = "";
+          dayEntries.forEach((shift) => {
+            shiftsHTML += `
+                        <div class="flex justify-between items-center py-3 px-4 border-t border-gray-100 dark:border-gray-700 first:border-t-0 hover:bg-pink-50 dark:hover:bg-zinc-700/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-pink-100 dark:bg-purple-900/50 text-pink-500 dark:text-purple-300 rounded-lg p-2 text-xs font-bold min-w-[60px] text-center">
+                                    ${shift.start}<br>⬇<br>${shift.end}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-gray-700 dark:text-gray-200">${shift.hours} horas</div>
+                                    <div class="text-xs text-gray-400">@ ${shift.rate}€/h</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-chunky text-lg text-kitty-text dark:text-kuromi-accent">+${shift.earned}€</span>
+                                <button onclick="deleteEntry(${shift.id})" class="text-gray-300 hover:text-red-400 p-1">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+          });
+
+          dayContainer.innerHTML = `
+                    <div class="bg-pink-50 dark:bg-zinc-900 px-4 py-2 flex justify-between items-center">
+                        <span class="font-bold text-sm text-gray-600 dark:text-gray-300 capitalize">${dayName}</span>
+                        <span class="bg-white dark:bg-zinc-700 px-2 py-0.5 rounded-md text-xs font-bold text-pink-500 dark:text-purple-300">Total: ${dayTotal.toFixed(2)}€</span>
+                    </div>
+                    <div>${shiftsHTML}</div>
+                `;
+
+          listContainer.appendChild(dayContainer);
+        });
+      }
+
+      // --- EXPORTAR / IMPORTAR (AJUSTES) ---
+      function backupData() {
+        const backup = {
+          entries: entries,
+          hourlyRate: localStorage.getItem("hourlyRate"),
+          theme: localStorage.getItem("theme"),
+          backupDate: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], {
+          type: "application/json",
+        });
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "mi_trabajo_kawaii.csv");
+        link.href = URL.createObjectURL(blob);
+        link.download = `workie_backup_${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
 
+      function restoreData(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (
+              confirm(`¿Restaurar datos? Esto reemplazará tu historial actual.`)
+            ) {
+              if (data.entries)
+                localStorage.setItem(
+                  "workEntries",
+                  JSON.stringify(data.entries),
+                );
+              if (data.hourlyRate)
+                localStorage.setItem("hourlyRate", data.hourlyRate);
+              if (data.theme) localStorage.setItem("theme", data.theme);
+              location.reload();
+            }
+          } catch (error) {
+            alert("Error al leer el archivo.");
+          }
+        };
+        reader.readAsText(file);
+        input.value = "";
+      }
+
       function copyToClipboard() {
-        if (entries.length === 0) {
-          alert("Nada que copiar todavía 🕸️");
-          return;
-        }
-
-        let text = "✨ WORKIE - Historial de Trabajo ✨\n\n";
-        let totalE = 0;
-        let totalH = 0;
-
+        if (entries.length === 0) return alert("Nada que copiar 🕸️");
+        const grouped = {};
         entries.forEach((e) => {
-          totalE += parseFloat(e.earned);
-          totalH += parseFloat(e.hours);
-          const dateObj = new Date(e.date);
-          // Fecha bonita: 17/01/2026
-          const dateStr = dateObj.toLocaleDateString("es-ES");
-
-          text += `📅 ${dateStr}\n`;
-          text += `⏰ ${e.start} - ${e.end} (${e.hours}h)\n`;
-          text += `💰 ${e.earned}€ (a ${e.rate}€/h)\n`;
-          text += `-------------------------\n`;
+          if (!grouped[e.date]) grouped[e.date] = [];
+          grouped[e.date].push(e);
         });
-
-        text += `\n💖 RESUMEN TOTAL 💖\n`;
-        text += `💰 Ganado: ${totalE.toFixed(2)}€\n`;
-        text += `⏳ Horas: ${totalH.toFixed(2)}h\n`;
-
-        // Método compatible con móviles para copiar
+        let text = "✨ WORKIE - Historial ✨\n\n";
+        Object.keys(grouped).forEach((dateKey) => {
+          const dayEntries = grouped[dateKey];
+          const dateObj = new Date(dateKey);
+          const dayStr = dateObj.toLocaleDateString("es-ES", {
+            weekday: "short",
+            day: "numeric",
+            month: "numeric",
+          });
+          const dayTotal = dayEntries.reduce(
+            (sum, e) => sum + parseFloat(e.earned),
+            0,
+          );
+          text += `📅 ${dayStr} (Total: ${dayTotal.toFixed(2)}€)\n`;
+          dayEntries.forEach((e) => {
+            text += `   ▫️ ${e.start}-${e.end} (${e.hours}h) -> ${e.earned}€\n`;
+          });
+          text += "\n";
+        });
+        const totalE = entries.reduce(
+          (acc, curr) => acc + parseFloat(curr.earned),
+          0,
+        );
+        text += `💖 TOTAL ACUMULADO: ${totalE.toFixed(2)}€ 💖`;
         const el = document.createElement("textarea");
         el.value = text;
         el.setAttribute("readonly", "");
@@ -565,14 +971,12 @@
         el.style.left = "-9999px";
         document.body.appendChild(el);
         el.select();
-
         try {
           document.execCommand("copy");
-          alert("¡Copiado! 📋\n\nYa puedes pegarlo en tus Notas del iPhone.");
+          alert("¡Copiado! 📋");
         } catch (err) {
-          alert("Uy, no pude copiarlo. Inténtalo de nuevo.");
+          alert("Error.");
         }
-
         document.body.removeChild(el);
       }
     </script>
