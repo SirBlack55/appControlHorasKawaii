@@ -506,7 +506,7 @@
         </div>
 
         <div class="text-center mt-8 opacity-40">
-          <p class="font-kawaii text-xs">Workie App v2.0</p>
+          <p class="font-kawaii text-xs">Workie App v2.1</p>
         </div>
       </div>
     </main>
@@ -540,6 +540,46 @@
         <span class="text-[10px] font-bold">Ajustes</span>
       </button>
     </nav>
+
+    <!-- COMPONENTE MODAL GLOBAL -->
+    <div
+      id="modal-overlay"
+      class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300 px-4"
+    >
+      <div
+        id="modal-content"
+        class="bg-white dark:bg-zinc-800 w-full max-w-xs rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-all duration-300 border-2 border-pink-100 dark:border-purple-900 relative"
+      >
+        <!-- Decoración esquina (opcional) -->
+        <div class="absolute -top-3 -right-3 text-2xl animate-bounce">
+          <span class="dark:hidden">✨</span>
+          <span class="hidden dark:block">🦇</span>
+        </div>
+
+        <!-- Icono -->
+        <div
+          id="modal-icon"
+          class="text-5xl text-center mb-4 filter drop-shadow-md"
+        ></div>
+
+        <!-- Título -->
+        <h3
+          id="modal-title"
+          class="font-chunky text-xl text-center text-gray-800 dark:text-white mb-2 leading-tight"
+        ></h3>
+
+        <!-- Mensaje -->
+        <div
+          id="modal-message"
+          class="text-center text-sm text-gray-500 dark:text-gray-300 mb-6 font-kawaii leading-relaxed"
+        ></div>
+
+        <!-- Botones -->
+        <div id="modal-buttons" class="flex gap-3 justify-center">
+          <!-- Se inyectan dinámicamente -->
+        </div>
+      </div>
+    </div>
 
     <!-- SCRIPTS -->
     <script>
@@ -582,32 +622,21 @@
 
       // --- SISTEMA DE PESTAÑAS ---
       function switchTab(tabName) {
-        // Ocultar todas las pestañas
-        document.querySelectorAll(".tab-content").forEach((el) => {
-          el.classList.remove("active");
-        });
-
-        // Mostrar la seleccionada
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.remove("active"));
         document.getElementById(`tab-${tabName}`).classList.add("active");
 
-        // Actualizar botones de navegación (colores)
         const navIds = ["nav-home", "nav-calendar", "nav-settings"];
         navIds.forEach((id) => {
-          const el = document.getElementById(id);
-          // Reset a gris
-          el.className =
+          document.getElementById(id).className =
             "flex flex-col items-center gap-1 w-16 text-gray-400 transition-colors";
         });
 
-        // Activar color del botón actual
-        const activeNav = document.getElementById(`nav-${tabName}`);
-        activeNav.className =
+        document.getElementById(`nav-${tabName}`).className =
           "flex flex-col items-center gap-1 w-16 text-pink-500 dark:text-purple-400 transition-colors scale-110";
 
-        // Si vamos al calendario, renderizarlo de nuevo para asegurar tamaño correcto
-        if (tabName === "calendar") {
-          renderCalendar();
-        }
+        if (tabName === "calendar") renderCalendar();
       }
 
       // --- CORE FUNCTIONS ---
@@ -714,10 +743,23 @@
           if (hasWork) {
             classes +=
               " bg-pink-400 dark:bg-purple-600 text-white shadow-md has-work";
-            dayEl.onclick = () =>
-              alert(
-                `📅 ${day}/${month + 1}\n💰 Ganado: ${dayWork.reduce((a, b) => a + parseFloat(b.earned), 0).toFixed(2)}€`,
-              );
+            // NUEVO MODAL PARA DETALLES DEL DÍA
+            dayEl.onclick = () => {
+              const dayTotal = dayWork
+                .reduce((a, b) => a + parseFloat(b.earned), 0)
+                .toFixed(2);
+              let detailMsg = `Ganado total: <b>${dayTotal}€</b><br><br>`;
+              dayWork.forEach((w) => {
+                detailMsg += `⏰ ${w.start} - ${w.end} (${w.hours}h)<br>`;
+              });
+
+              showModal({
+                title: `Resumen del ${day}`,
+                message: detailMsg,
+                icon: isDark ? "💀" : "📅",
+                type: "info",
+              });
+            };
           } else {
             classes += " hover:bg-pink-100 dark:hover:bg-zinc-700";
           }
@@ -729,14 +771,91 @@
         monthEarningsEl.innerText = `${monthTotal.toFixed(2)}€`;
       }
 
-      // --- INPUT & DATA LOGIC ---
+      // --- SISTEMA DE MODALES PERSONALIZADOS ---
+
+      function showModal({
+        title,
+        message,
+        icon = "✨",
+        type = "info",
+        onConfirm,
+      }) {
+        const overlay = document.getElementById("modal-overlay");
+        const content = document.getElementById("modal-content");
+
+        // Set content
+        document.getElementById("modal-icon").innerHTML = icon;
+        document.getElementById("modal-title").innerText = title;
+        document.getElementById("modal-message").innerHTML = message;
+
+        const btnContainer = document.getElementById("modal-buttons");
+        btnContainer.innerHTML = "";
+
+        if (type === "confirm") {
+          // Cancel
+          const btnCancel = document.createElement("button");
+          btnCancel.className =
+            "flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-300 font-bold text-sm active:scale-95 transition hover:bg-gray-200";
+          btnCancel.innerText = "Cancelar";
+          btnCancel.onclick = closeModal;
+          btnContainer.appendChild(btnCancel);
+
+          // Confirm
+          const btnConfirm = document.createElement("button");
+          btnConfirm.className =
+            "flex-1 py-3 rounded-xl bg-pink-500 dark:bg-purple-600 text-white font-bold text-sm shadow-lg shadow-pink-200 dark:shadow-purple-900/50 active:scale-95 transition hover:brightness-110";
+          btnConfirm.innerText = "Sí, dale";
+          btnConfirm.onclick = () => {
+            if (onConfirm) onConfirm();
+            closeModal();
+          };
+          btnContainer.appendChild(btnConfirm);
+        } else {
+          // Info (OK)
+          const btnOk = document.createElement("button");
+          btnOk.className =
+            "w-full py-3 rounded-xl bg-gradient-to-r from-pink-400 to-rose-400 dark:from-purple-600 dark:to-indigo-600 text-white font-bold text-sm shadow-lg active:scale-95 transition hover:brightness-110";
+          btnOk.innerText = "¡Entendido!";
+          btnOk.onclick = closeModal;
+          btnContainer.appendChild(btnOk);
+        }
+
+        // Animación Entrada
+        overlay.classList.remove("hidden");
+        setTimeout(() => {
+          overlay.classList.remove("opacity-0");
+          content.classList.remove("scale-95");
+          content.classList.add("scale-100");
+        }, 10);
+      }
+
+      function closeModal() {
+        const overlay = document.getElementById("modal-overlay");
+        const content = document.getElementById("modal-content");
+
+        // Animación Salida
+        overlay.classList.add("opacity-0");
+        content.classList.remove("scale-100");
+        content.classList.add("scale-95");
+
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+        }, 300);
+      }
+
+      // --- INPUT & DATA LOGIC (Actualizada con Modales) ---
 
       function saveDefaultRate() {
         const newRate = settingsRateInput.value;
         if (newRate) {
           localStorage.setItem("hourlyRate", newRate);
-          rateInput.value = newRate; // Actualizar también el formulario principal
-          alert("¡Tarifa guardada! 🌸 Aparecerá por defecto.");
+          rateInput.value = newRate;
+          showModal({
+            title: "¡Guardado!",
+            message: "Tu tarifa favorita se ha guardado correctamente. 🌸",
+            icon: isDark ? "💾" : "💖",
+            type: "info",
+          });
         }
       }
 
@@ -747,11 +866,15 @@
         const end = endInput.value;
 
         if (!rate || !date || !start || !end) {
-          alert("¡Ups! 🌸 Faltan datos.");
+          showModal({
+            title: "¡Ups!",
+            message: "Faltan datos por rellenar. <br>¡No seas vaga! 😋",
+            icon: "🤔",
+            type: "info",
+          });
           return;
         }
 
-        // Auto-guardar la tarifa usada como por defecto si no hay una
         if (!localStorage.getItem("hourlyRate")) {
           localStorage.setItem("hourlyRate", rate);
         }
@@ -780,28 +903,45 @@
 
         updateApp();
 
-        // Opcional: Llevar al usuario a la agenda para ver el resultado
-        // switchTab('calendar');
-        alert("¡Apuntado! ✨");
+        showModal({
+          title: "¡Apuntado!",
+          message: `Has ganado <b>${earned.toFixed(2)}€</b> en este turno. <br>¡Buen trabajo! ✨`,
+          icon: isDark ? "🦇" : "🎀",
+          type: "info",
+        });
       }
 
       function deleteEntry(id) {
-        if (confirm("¿Borrar este turno? 💔")) {
-          entries = entries.filter((entry) => entry.id !== id);
-          updateApp();
-        }
+        showModal({
+          title: "¿Borrar turno?",
+          message:
+            "Esta acción no se puede deshacer. <br>¿Seguro que quieres borrarlo? 💔",
+          icon: "🗑️",
+          type: "confirm",
+          onConfirm: () => {
+            entries = entries.filter((entry) => entry.id !== id);
+            updateApp();
+          },
+        });
       }
 
       function clearAllData() {
-        if (
-          confirm(
-            "¿Segura que quieres borrar TODO el historial? 😱\nEsta acción no se puede deshacer.",
-          )
-        ) {
-          entries = [];
-          updateApp();
-          alert("Historial borrado 🗑️");
-        }
+        showModal({
+          title: "¿ESTÁS SEGURA?",
+          message:
+            "Vas a borrar <b>TODO</b> tu historial. <br>No podrás recuperarlo. 😱",
+          icon: "🔥",
+          type: "confirm",
+          onConfirm: () => {
+            entries = [];
+            updateApp();
+            showModal({
+              title: "Borrado",
+              message: "Historial eliminado.",
+              icon: "🧹",
+            });
+          },
+        });
       }
 
       function saveData() {
@@ -912,21 +1052,40 @@
         reader.onload = function (e) {
           try {
             const data = JSON.parse(e.target.result);
-            if (
-              confirm(`¿Restaurar datos? Esto reemplazará tu historial actual.`)
-            ) {
-              if (data.entries)
-                localStorage.setItem(
-                  "workEntries",
-                  JSON.stringify(data.entries),
-                );
-              if (data.hourlyRate)
-                localStorage.setItem("hourlyRate", data.hourlyRate);
-              if (data.theme) localStorage.setItem("theme", data.theme);
-              location.reload();
-            }
+
+            showModal({
+              title: "¿Restaurar Copia?",
+              message: `Se encontraron ${data.entries?.length || 0} registros. <br>Esto reemplazará tu historial actual.`,
+              icon: "📦",
+              type: "confirm",
+              onConfirm: () => {
+                if (data.entries)
+                  localStorage.setItem(
+                    "workEntries",
+                    JSON.stringify(data.entries),
+                  );
+                if (data.hourlyRate)
+                  localStorage.setItem("hourlyRate", data.hourlyRate);
+                if (data.theme) localStorage.setItem("theme", data.theme);
+
+                showModal({
+                  title: "¡Restaurado!",
+                  message: "La página se recargará ahora.",
+                  icon: "🔄",
+                  type: "info",
+                  onConfirm: () => location.reload(), // Solo recarga al aceptar el modal
+                });
+                // Opcional: recargar tras un pequeño delay si el usuario no pulsa nada
+                setTimeout(() => location.reload(), 2000);
+              },
+            });
           } catch (error) {
-            alert("Error al leer el archivo.");
+            showModal({
+              title: "Error",
+              message: "El archivo no es válido.",
+              icon: "❌",
+              type: "info",
+            });
           }
         };
         reader.readAsText(file);
@@ -934,7 +1093,15 @@
       }
 
       function copyToClipboard() {
-        if (entries.length === 0) return alert("Nada que copiar 🕸️");
+        if (entries.length === 0) {
+          showModal({
+            title: "Ups",
+            message: "Nada que copiar todavía. 🕸️",
+            icon: "👻",
+          });
+          return;
+        }
+
         const grouped = {};
         entries.forEach((e) => {
           if (!grouped[e.date]) grouped[e.date] = [];
@@ -964,6 +1131,7 @@
           0,
         );
         text += `💖 TOTAL ACUMULADO: ${totalE.toFixed(2)}€ 💖`;
+
         const el = document.createElement("textarea");
         el.value = text;
         el.setAttribute("readonly", "");
@@ -973,7 +1141,12 @@
         el.select();
         try {
           document.execCommand("copy");
-          alert("¡Copiado! 📋");
+          showModal({
+            title: "¡Copiado!",
+            message: "Ya puedes pegarlo en tus Notas. 📋",
+            icon: "✅",
+            type: "info",
+          });
         } catch (err) {
           alert("Error.");
         }
