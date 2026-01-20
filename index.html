@@ -433,11 +433,26 @@
 
         <!-- Lista -->
         <div>
-          <div class="flex justify-between items-end mb-3 px-2">
+          <div class="flex justify-between items-center mb-3 px-2">
             <h3 class="font-chunky text-lg text-gray-600 dark:text-gray-300">
               Historial
             </h3>
-            <p class="text-[10px] text-gray-400">Selecciona para calcular</p>
+
+            <div class="flex gap-2">
+              <button
+                onclick="copyHistory(false)"
+                class="text-xs bg-gray-100 dark:bg-zinc-700 px-3 py-1 rounded-full font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition"
+              >
+                Copiar <i class="fa-regular fa-clipboard text-sm"></i>
+              </button>
+
+              <button
+                onclick="openHistoryModal()"
+                class="text-xs bg-gray-100 dark:bg-zinc-700 px-3 py-1 rounded-full font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition"
+              >
+                <i class="fa-solid fa-sliders mr-1"></i> Filtros
+              </button>
+            </div>
           </div>
 
           <div id="entries-list" class="space-y-4 pb-20"></div>
@@ -537,10 +552,6 @@
             <i class="fa-solid fa-trash-can"></i> Borrar Todo
           </button>
         </div>
-
-        <div class="text-center mt-8 opacity-40">
-          <p class="font-kawaii text-xs">Workie App v3.1</p>
-        </div>
       </div>
     </main>
 
@@ -579,12 +590,22 @@
         >
           <i class="fa-solid fa-check mr-1"></i> Cobrado
         </button>
+
         <button
           onclick="markSelected(false)"
           class="flex-1 bg-orange-100 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 py-2 rounded-xl text-xs font-bold active:scale-95 transition"
         >
           <i class="fa-regular fa-clock mr-1"></i> Pendiente
         </button>
+
+        <button
+          onclick="copyHistory(true)"
+          class="w-10 flex items-center justify-center bg-pink-100 dark:bg-purple-900 text-pink-600 dark:text-purple-300 rounded-xl active:scale-95"
+          title="Copiar selección"
+        >
+          <i class="fa-regular fa-clipboard text-sm"></i>
+        </button>
+
         <button
           onclick="clearSelection()"
           class="w-10 flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-gray-500 rounded-xl active:scale-95"
@@ -716,6 +737,59 @@
             class="flex-1 py-3 rounded-xl bg-blue-500 text-white font-bold text-sm shadow-lg active:scale-95 transition"
           >
             Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="history-modal"
+      class="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-4"
+    >
+      <div
+        class="bg-white dark:bg-zinc-800 w-full max-w-md rounded-3xl p-5 shadow-2xl border-2 border-pink-100 dark:border-purple-900"
+      >
+        <h3 class="font-chunky text-lg mb-4 text-center">
+          📊 Historial avanzado
+        </h3>
+
+        <div class="space-y-3 mb-4">
+          <select
+            id="filter-period"
+            class="w-full rounded-xl p-2 bg-gray-50 dark:bg-zinc-700"
+          >
+            <option value="all">Todos</option>
+            <option value="month">Mes seleccionado</option>
+            <option value="week">Semana actual</option>
+          </select>
+
+          <select
+            id="filter-status"
+            class="w-full rounded-xl p-2 bg-gray-50 dark:bg-zinc-700"
+          >
+            <option value="all">Todos</option>
+            <option value="paid">Cobrados</option>
+            <option value="pending">Pendientes</option>
+          </select>
+        </div>
+
+        <div
+          id="history-modal-list"
+          class="max-h-60 overflow-y-auto text-sm space-y-2 mb-4"
+        ></div>
+
+        <div class="flex gap-2">
+          <button
+            onclick="copyFilteredHistory()"
+            class="flex-1 bg-pink-400 dark:bg-purple-600 text-white py-2 rounded-xl font-bold"
+          >
+            📋 Copiar
+          </button>
+          <button
+            onclick="closeHistoryModal()"
+            class="flex-1 bg-gray-200 dark:bg-zinc-700 py-2 rounded-xl font-bold"
+          >
+            Cerrar
           </button>
         </div>
       </div>
@@ -909,14 +983,22 @@
       }
 
       function renderEntries() {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+
+        const visibleEntries = entries.filter((e) => {
+          const d = new Date(e.date);
+          return d.getFullYear() === year && d.getMonth() === month;
+        });
+
         const container = document.getElementById("entries-list");
         container.innerHTML = "";
-        if (entries.length === 0) {
+        if (visibleEntries.length === 0) {
           container.innerHTML = `<div class="text-center py-10 opacity-50"><p>Lista vacía...</p></div>`;
           return;
         }
         const grouped = {};
-        entries.forEach((entry) => {
+        visibleEntries.forEach((entry) => {
           if (!grouped[entry.date]) grouped[entry.date] = [];
           grouped[entry.date].push(entry);
         });
@@ -1038,6 +1120,7 @@
       function changeMonth(delta) {
         currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
         renderCalendar();
+        renderEntries();
       }
       function renderCalendar() {
         const year = currentCalendarDate.getFullYear();
@@ -1221,6 +1304,150 @@
           message: "Historial limpio",
           icon: "🧹",
         });
+      }
+
+      function copyHistory(onlySelected = false) {
+        let list = [];
+
+        if (onlySelected) {
+          list = entries.filter((e) => selectedEntryIds.has(e.id));
+          if (list.length === 0) {
+            showModal({
+              title: "Nada seleccionado",
+              message: "Selecciona al menos un turno.",
+              icon: "📌",
+            });
+            return;
+          }
+        } else {
+          list = entries;
+        }
+
+        // Agrupar por fecha
+        const grouped = {};
+        list.forEach((e) => {
+          if (!grouped[e.date]) grouped[e.date] = [];
+          grouped[e.date].push(e);
+        });
+
+        let text = `📅 Historial de Turnos – Workie\n\n`;
+        let total = 0;
+
+        Object.keys(grouped)
+          .sort()
+          .forEach((dateKey) => {
+            const dateObj = new Date(dateKey);
+            const dayName = dateObj.toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            });
+
+            text += `🗓 ${dayName}\n`;
+
+            grouped[dateKey].forEach((e) => {
+              const status = e.paid ? "✅" : "⏳";
+              text += `• ${e.start} - ${e.end} | ${e.hours} h | ${e.rate}€/h → ${e.earned}€ ${status}\n`;
+              total += parseFloat(e.earned);
+            });
+
+            text += `\n`;
+          });
+
+        text += `💰 TOTAL: ${total.toFixed(2)}€`;
+
+        navigator.clipboard.writeText(text).then(() => {
+          showModal({
+            title: "Copiado 📋",
+            message: "Ya puedes pegarlo en Notas.",
+            icon: "✨",
+          });
+        });
+      }
+
+      function getFilteredEntries({ period, status }) {
+        let list = [...entries];
+
+        if (period === "month") {
+          const y = currentCalendarDate.getFullYear();
+          const m = currentCalendarDate.getMonth();
+          list = list.filter((e) => {
+            const d = new Date(e.date);
+            return d.getFullYear() === y && d.getMonth() === m;
+          });
+        }
+
+        if (period === "week") {
+          const now = new Date();
+          const start = new Date(now);
+          start.setDate(now.getDate() - now.getDay());
+          list = list.filter((e) => {
+            const d = new Date(e.date);
+            return d >= start && d <= now;
+          });
+        }
+
+        if (status === "paid") list = list.filter((e) => e.paid);
+        if (status === "pending") list = list.filter((e) => !e.paid);
+
+        return list;
+      }
+
+      function openHistoryModal() {
+        document.getElementById("history-modal").classList.remove("hidden");
+        renderHistoryModal();
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("history-modal").classList.add("hidden");
+      }
+
+      function renderHistoryModal() {
+        const filters = {
+          period: document.getElementById("filter-period").value,
+          status: document.getElementById("filter-status").value,
+        };
+
+        const list = document.getElementById("history-modal-list");
+        const data = getFilteredEntries(filters);
+
+        if (!data.length) {
+          list.innerHTML =
+            "<p class='text-center opacity-50'>Sin resultados</p>";
+          return;
+        }
+
+        list.innerHTML = data
+          .map(
+            (e) =>
+              `<div class="flex justify-between">
+      <span>${e.date}</span>
+      <span>${e.earned}€ ${e.paid ? "✅" : "⏳"}</span>
+    </div>`,
+          )
+          .join("");
+      }
+
+      ["filter-period", "filter-status"].forEach((id) => {
+        document
+          .getElementById(id)
+          .addEventListener("change", renderHistoryModal);
+      });
+
+      function copyFilteredHistory() {
+        const data = getFilteredEntries({
+          period: filter - period.value,
+          status: filter - status.value,
+        });
+
+        let text = "";
+        data.forEach((e) => {
+          text += `${e.date} | ${e.start}-${e.end} | ${e.earned}€\n`;
+        });
+
+        navigator.clipboard.writeText(text);
+        closeHistoryModal();
       }
     </script>
   </body>
